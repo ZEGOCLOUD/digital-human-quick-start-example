@@ -19,10 +19,6 @@ public interface ZegoQuickStartTaskControlViewCallback {
      * 点击打断按钮
      */
     void onInterruptClicked();
-    
-    /**
-     * 点击销毁全部按钮
-     */
-    void onDestroyAllClicked();
+
 }
 

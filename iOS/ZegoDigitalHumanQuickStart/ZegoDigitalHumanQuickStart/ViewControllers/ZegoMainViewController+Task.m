@@ -101,7 +101,6 @@
         
         // 步骤3: 使用返回的 AppId 初始化Express引擎
         NSInteger appId = [appIdStr integerValue];
-        [strongSelf initExpressEngineWithAppId:appId];
         
         // 创建任务对象并保存任务状态
         ZegoTask *task = [[ZegoTask alloc] initWithDictionary:@{
@@ -134,6 +133,7 @@
                 // 注意: 拉流在RTC回调的房间消息onRoomStreamUpdate中实现
                 if (base64Config && base64Config.length > 0) {
                     NSLog(@"[数字人] 使用服务端返回的 Base64Config 启动数字人");
+                    [[ZegoExpressEngine sharedEngine] setCustomVideoRenderHandler:self];
                     [strongSelf startDigitalHumanWithConfig:base64Config];
                 }
                 if (completion) completion(YES);
@@ -186,23 +186,8 @@
             // 4. RTC 完全停止后，再停止数字人渲染
             [strongSelf stopDigitalHuman];
             
-            // 5. 销毁引擎
-            if (strongSelf.rtcEngineCreated) {
-                NSLog(@"[RTC] 开始销毁引擎");
-                [ZegoExpressEngine destroyEngine:^{
-                    NSLog(@"[RTC] ZegoExpressEngine已成功销毁");
-                    __strong typeof(weakSelf) strongSelf = weakSelf;
-                    if (!strongSelf) return;
-                    
-                    strongSelf.rtcEngineCreated = NO;
-                    
-                    // 6. 调用停止任务 API
-                    [strongSelf callStopTaskAPI];
-                }];
-            } else {
-                // 如果引擎未创建，直接调用停止任务 API
-                [strongSelf callStopTaskAPI];
-            }
+            // 5. 直接调用停止任务 API
+            [strongSelf callStopTaskAPI];
         }];
     } else {
         // 如果没有登录房间，直接停止数字人和调用 API
@@ -350,9 +335,53 @@
             continueDestroy();
         }];
     } else {
+        [self destroyExpressEngine];
         continueDestroy();
     }
 }
+
+
+- (void)destroyAllTask {
+    __weak typeof(self) weakSelf = self;
+    [[ZegoAPIService sharedService] queryDigitalHumanStreamTasks:^(NSArray<ZegoTask *> * _Nonnull tasks) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        
+        if (tasks.count == 0) {
+            [strongSelf destroyExpressEngine];
+            [strongSelf updateStatus:@"没有运行中的任务"];
+            return;
+        }
+        
+        // 筛选test_room_开头的任务
+        NSMutableArray *filteredTasks = [NSMutableArray array];
+        for (ZegoTask *task in tasks) {
+            if ([task.roomId hasPrefix:@"test_room_"]) {
+                [filteredTasks addObject:task];
+            }
+        }
+        
+        if (filteredTasks.count == 0) {
+            [strongSelf destroyExpressEngine];
+            [strongSelf updateStatus:@"没有可销毁的test_room_任务"];
+            return;
+        }
+        
+        // 依次停止所有任务
+        [strongSelf destroyTasksInArray:filteredTasks index:0 completion:^{
+            [strongSelf updateStatus:[NSString stringWithFormat:@"已销毁%lu个任务", (unsigned long)filteredTasks.count]];
+        }];
+        
+    } failure:^(NSError * _Nonnull error, NSInteger code, NSString * _Nullable message) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        
+        [strongSelf destroyExpressEngine];
+        [strongSelf updateStatus:@"查询任务失败"];
+    }];
+}
+
+
 
 #pragma mark - ZegoTaskControlViewDelegate
 
@@ -401,53 +430,6 @@
     }];
 }
 
-- (void)taskControlViewDidTapDestroyAll:(ZegoTaskControlView *)view {
-    // 立即隐藏控制面板
-    if (self.isControlPanelVisible) {
-        [self toggleControlPanel];
-    }
-    
-    [self.taskControlView setLoading:YES forButton:3];
-    
-    __weak typeof(self) weakSelf = self;
-    [[ZegoAPIService sharedService] queryDigitalHumanStreamTasks:^(NSArray<ZegoTask *> * _Nonnull tasks) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        
-        if (tasks.count == 0) {
-            [strongSelf updateStatus:@"没有运行中的任务"];
-            [strongSelf.taskControlView setLoading:NO forButton:3];
-            return;
-        }
-        
-        // 筛选test_room_开头的任务
-        NSMutableArray *filteredTasks = [NSMutableArray array];
-        for (ZegoTask *task in tasks) {
-            if ([task.roomId hasPrefix:@"test_room_"]) {
-                [filteredTasks addObject:task];
-            }
-        }
-        
-        if (filteredTasks.count == 0) {
-            [strongSelf updateStatus:@"没有可销毁的test_room_任务"];
-            [strongSelf.taskControlView setLoading:NO forButton:3];
-            return;
-        }
-        
-        // 依次停止所有任务
-        [strongSelf destroyTasksInArray:filteredTasks index:0 completion:^{
-            [strongSelf updateStatus:[NSString stringWithFormat:@"已销毁%lu个任务", (unsigned long)filteredTasks.count]];
-            [strongSelf.taskControlView setLoading:NO forButton:3];
-        }];
-        
-    } failure:^(NSError * _Nonnull error, NSInteger code, NSString * _Nullable message) {
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        
-        [strongSelf updateStatus:@"查询任务失败"];
-        [strongSelf.taskControlView setLoading:NO forButton:3];
-    }];
-}
 
 #pragma mark - ZegoDriveControlViewDelegate
 

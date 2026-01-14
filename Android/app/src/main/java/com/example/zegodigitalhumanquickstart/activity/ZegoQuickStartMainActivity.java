@@ -314,6 +314,9 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
                 String coverUrl = digitalHuman.getAvatarUrl(); // 使用avatarUrl作为coverUrl
                 placeholderView.updateContent(name, coverUrl);
                 Log.d(TAG, "[数字人] 加载数字人信息成功: " + name);
+
+                // 创建数字人
+                initExpressEngineWithAppId(digitalHuman.getAppId());
                 
                 // 触发预加载
                 preloadDigitalHumanResource(digitalHuman);
@@ -373,6 +376,7 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
             new ZegoDigitalHumanResource.PreloadCallback() {
                 @Override
                 public void onSuccess() {
+
                     Log.i(TAG, "[预加载] 预加载成功: " + digitalHumanId);
                 }
                 
@@ -698,7 +702,6 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
                 
                 // 步骤3: 使用返回的 AppId 初始化Express引擎
                 long appId = Long.parseLong(appIdStr);
-                initExpressEngineWithAppId(appId);
                 
                 // 更新API服务配置中的appId（用于后续API调用）
                 apiService.setAppId(appId);
@@ -821,20 +824,8 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
                 // 4. RTC 完全停止后，再停止数字人
                 stopDigitalHuman();
                 
-                // 5. 销毁引擎
-                if (rtcEngineCreated) {
-                    Log.d(TAG, "[RTC] 开始销毁引擎");
-                    ZegoExpressEngine.destroyEngine(() -> {
-                        Log.d(TAG, "[RTC] ZegoExpressEngine已成功销毁");
-                        rtcEngineCreated = false;
-                        
-                        // 6. 调用停止任务 API
-                        callStopTaskAPI(taskId, updateUI);
-                    });
-                } else {
-                    // 如果引擎未创建，直接调用停止任务 API
-                    callStopTaskAPI(taskId, updateUI);
-                }
+                // 5. 直接调用停止任务 API
+                callStopTaskAPI(taskId, updateUI);
             });
             } catch (Exception e) {
                 // 登出失败时兜底处理，避免未关闭的任务和引擎
@@ -944,21 +935,15 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
         });
     }
     
-    @Override
-    public void onDestroyAllClicked() {
-        // 隐藏控制面板
-        if (isControlPanelVisible) {
-            toggleControlPanel();
-        }
-        
-        taskControlView.setLoading(3, true);
-        
+
+    public void destroyAllTasks() {
         apiService.queryDigitalHumanStreamTasks(new ZegoQuickStartAPIService.TaskListCallback() {
             @Override
             public void onSuccess(List<ZegoQuickStartTask> tasks) {
                 if (tasks == null || tasks.isEmpty()) {
                     updateStatus("没有运行中的任务");
                     taskControlView.setLoading(3, false);
+                    destroyExpress();
                     return;
                 }
                 
@@ -973,6 +958,7 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
                 if (filteredTasks.isEmpty()) {
                     updateStatus("没有可销毁的test_room_任务");
                     taskControlView.setLoading(3, false);
+                    destroyExpress();
                     return;
                 }
                 
@@ -1269,51 +1255,24 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
         // 重新应用配置（无持久化）
         apiService.setServerURL(config.getServerURL());
     }
+
+
+    private void destroyExpress() {
+        // 销毁引擎
+        if (rtcEngineCreated) {
+            try {
+                ZegoExpressEngine.destroyEngine(null);
+                rtcEngineCreated = false;
+            } catch (Exception e) {
+                Log.e(TAG, "销毁引擎时发生异常", e);
+            }
+        }
+    }
     
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        
-        // 如果有正在运行的任务，先停止任务（包括调用服务端API）
-        if (currentTask != null) {
-            Log.d(TAG, "[生命周期] 检测到运行中的任务，开始停止任务");
-            stopTaskInternal(false); // 不更新UI，因为Activity正在销毁
-        } else {
-            // 如果没有任务，只清理本地资源
-            // 停止数字人
-            stopDigitalHuman();
-            
-            // 停止拉流（需要先检查引擎是否存在）
-            if (rtcEngineCreated) {
-                try {
-                    ZegoExpressEngine engine = ZegoExpressEngine.getEngine();
-                    if (engine != null) {
-                        // 停止拉流
-                        if (currentStreamId != null) {
-                            engine.stopPlayingStream(currentStreamId);
-                        }
-                        
-                        // 退出房间
-                        if (isRoomLoggedIn && currentRoomId != null) {
-                            engine.logoutRoom(currentRoomId);
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "清理RTC资源时发生异常", e);
-                }
-            }
-            
-            // 销毁引擎
-            if (rtcEngineCreated) {
-                try {
-                    ZegoExpressEngine.destroyEngine(null);
-                    rtcEngineCreated = false;
-                } catch (Exception e) {
-                    Log.e(TAG, "销毁引擎时发生异常", e);
-                }
-            }
-        }
-        
+        destroyAllTasks();
         Log.d(TAG, "ZegoQuickStartMainActivity destroyed");
     }
 }

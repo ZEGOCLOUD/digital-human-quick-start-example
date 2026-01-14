@@ -12,7 +12,6 @@
 @property (nonatomic, strong, readwrite) UIButton *createTaskButton;
 @property (nonatomic, strong, readwrite) UIButton *stopTaskButton;
 @property (nonatomic, strong, readwrite) UIButton *interruptButton;
-@property (nonatomic, strong, readwrite) UIButton *destroyAllButton;
 
 @property (nonatomic, assign) BOOL hasTaskRunning; // 记录当前任务状态，便于恢复按钮可用性
 
@@ -71,10 +70,6 @@
                                         backgroundColor:[UIColor colorWithRed:0.98 green:0.68 blue:0.08 alpha:1.0]
                                                  action:@selector(interruptTapped)];
     
-    self.destroyAllButton = [self createButtonWithTitle:@"销毁全部" 
-                                         backgroundColor:[UIColor colorWithRed:0.6 green:0.4 blue:0.4 alpha:1.0]
-                                                  action:@selector(destroyAllTapped)];
-    
     // 创建Loading指示器
     self.createLoadingView = [self createLoadingIndicator];
     self.stopLoadingView = [self createLoadingIndicator];
@@ -84,14 +79,12 @@
     [self.createTaskButton addSubview:self.createLoadingView];
     [self.stopTaskButton addSubview:self.stopLoadingView];
     [self.interruptButton addSubview:self.interruptLoadingView];
-    [self.destroyAllButton addSubview:self.destroyAllLoadingView];
     
     // StackView布局按钮
     self.buttonStackView = [[UIStackView alloc] initWithArrangedSubviews:@[
         self.createTaskButton,
         self.stopTaskButton,
-        self.interruptButton,
-        self.destroyAllButton
+        self.interruptButton
     ]];
     self.buttonStackView.axis = UILayoutConstraintAxisHorizontal;
     self.buttonStackView.distribution = UIStackViewDistributionFillEqually;
@@ -159,7 +152,6 @@
     self.createTaskButton.enabled = !hasTask;
     self.stopTaskButton.enabled = hasTask;
     self.interruptButton.enabled = hasTask;
-    self.destroyAllButton.enabled = YES; // 销毁全部按钮始终可用
     
     // 更新按钮透明度
     self.createTaskButton.alpha = hasTask ? 0.5 : 1.0;
@@ -189,10 +181,6 @@
             loadingView = self.interruptLoadingView;
             targetButton = self.interruptButton;
             break;
-        case 3:
-            loadingView = self.destroyAllLoadingView;
-            targetButton = self.destroyAllButton;
-            break;
     }
     
     if (loading) {
@@ -202,7 +190,7 @@
     } else {
         [loadingView stopAnimating];
         // 恢复按钮标题
-        NSArray *titles = @[@"创建任务", @"停止任务", @"打断", @"销毁全部"];
+        NSArray *titles = @[@"创建任务", @"停止任务", @"打断"];
         if (button < titles.count) {
             [targetButton setTitle:titles[button] forState:UIControlStateNormal];
         }
@@ -231,11 +219,6 @@
     }
 }
 
-- (void)destroyAllTapped {
-    if ([self.delegate respondsToSelector:@selector(taskControlViewDidTapDestroyAll:)]) {
-        [self.delegate taskControlViewDidTapDestroyAll:self];
-    }
-}
 
 #pragma mark - Memory Management
 

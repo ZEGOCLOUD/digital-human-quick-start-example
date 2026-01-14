@@ -62,16 +62,19 @@
 }
 
 
+
+
+
 #pragma mark - Memory Management
+
+
 
 - (void)dealloc {
     NSLog(@"[ZegoMainViewController] dealloc");
     
-
-    // 销毁RTC引擎
-    [self destroyExpressEngine];
-    // 停止数字人
-    [self stopDigitalHuman];
+    // 销毁RTC引擎和数字人任务
+    [self destroyAllTask];
+    
     // 清理资源
     _currentTask = nil;
     _config = nil;

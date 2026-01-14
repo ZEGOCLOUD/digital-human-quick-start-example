@@ -16,7 +16,7 @@
 #import "ZegoDigitalHumanPlaceholderView.h"
 #import "ZegoTask.h"
 #import "ZegoConfig.h"
-
+#import "ZegoMainViewController+RTC.h"
 #import <ZegoDigitalMobile/ZegoDigitalMobile.h>
 #import <ZegoDigitalMobile/ZegoDigitalHumanResource.h>
 #import <ZegoDigitalMobile/ZegoDigitalHumanAuth.h>
@@ -57,6 +57,9 @@
         // 更新占位视图
         [strongSelf.placeholderView updateWithName:digitalHuman.name coverUrl:digitalHuman.coverUrl];
         NSLog(@"[数字人] 加载数字人信息成功: %@", digitalHuman.name);
+        
+        
+        [strongSelf initExpressEngineWithAppId:digitalHuman.appId];
         
         // 触发预加载
         [strongSelf preloadDigitalHumanResource:digitalHuman];

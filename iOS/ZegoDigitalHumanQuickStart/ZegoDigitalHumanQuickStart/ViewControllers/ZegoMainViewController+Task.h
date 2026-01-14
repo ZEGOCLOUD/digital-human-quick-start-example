@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ZegoMainViewController (Task) <ZegoTaskControlViewDelegate, ZegoDriveControlViewDelegate>
 - (void)stopTaskAndCleanup;
+- (void)destroyAllTask;
 @end
 
 NS_ASSUME_NONNULL_END

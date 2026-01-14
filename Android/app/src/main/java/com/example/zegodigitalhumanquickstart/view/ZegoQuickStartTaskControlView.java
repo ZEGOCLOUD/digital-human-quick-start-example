@@ -27,7 +27,6 @@ public class ZegoQuickStartTaskControlView extends LinearLayout {
     private Button createTaskButton;
     private Button stopTaskButton;
     private Button interruptButton;
-    private Button destroyAllButton;
     
     private ProgressBar createLoadingView;
     private ProgressBar stopLoadingView;
@@ -85,7 +84,6 @@ public class ZegoQuickStartTaskControlView extends LinearLayout {
         createTaskButton = createButton(context, "创建任务", Color.parseColor("#52C51A"));
         stopTaskButton = createButton(context, "停止任务", Color.parseColor("#FF4D4F"));
         interruptButton = createButton(context, "打断", Color.parseColor("#FAAD14"));
-        destroyAllButton = createButton(context, "销毁全部", Color.parseColor("#999999"));
         
         // 创建Loading指示器
         createLoadingView = createLoadingIndicator(context);
@@ -106,12 +104,8 @@ public class ZegoQuickStartTaskControlView extends LinearLayout {
         buttonLayout.addView(stopTaskButton, buttonParams);
         
         buttonParams = new LinearLayout.LayoutParams(0, buttonHeight, 1.0f);
-        buttonParams.rightMargin = buttonSpacing;
         buttonLayout.addView(interruptButton, buttonParams);
-        
-        buttonParams = new LinearLayout.LayoutParams(0, buttonHeight, 1.0f);
-        buttonLayout.addView(destroyAllButton, buttonParams);
-        
+
         // 添加Loading到按钮
         ((LinearLayout) createTaskButton.getParent()).addView(createLoadingView);
         
@@ -132,11 +126,7 @@ public class ZegoQuickStartTaskControlView extends LinearLayout {
         interruptButton.setOnClickListener(v -> {
             if (callback != null) callback.onInterruptClicked();
         });
-        
-        destroyAllButton.setOnClickListener(v -> {
-            if (callback != null) callback.onDestroyAllClicked();
-        });
-        
+
         // 初始状态：无任务
         updateButtonStates(false);
     }
@@ -186,7 +176,6 @@ public class ZegoQuickStartTaskControlView extends LinearLayout {
         createTaskButton.setEnabled(!hasTask);
         stopTaskButton.setEnabled(hasTask);
         interruptButton.setEnabled(hasTask);
-        destroyAllButton.setEnabled(true);
         
         // 更新透明度
         createTaskButton.setAlpha(hasTask ? 0.5f : 1.0f);
@@ -225,11 +214,6 @@ public class ZegoQuickStartTaskControlView extends LinearLayout {
                 loadingView = interruptLoadingView;
                 button = interruptButton;
                 buttonText = "打断";
-                break;
-            case 3:
-                loadingView = destroyAllLoadingView;
-                button = destroyAllButton;
-                buttonText = "销毁全部";
                 break;
         }
         
