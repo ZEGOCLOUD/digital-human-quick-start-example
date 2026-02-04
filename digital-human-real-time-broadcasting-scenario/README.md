@@ -321,8 +321,16 @@ roomConfig.token = token;
 ```
 ---
 
+## 四、各端示例代码详细说明
 
-## 四、注意事项
+- [业务后台示例代码详细说明](./server/README.md)
+- [Web(React) 端示例代码详细说明](./web-react/README.md)
+- [Web(Vue) 端示例代码详细说明](./web-vue/README.md)
+- [Android 端示例代码详细说明](./android/README.md)
+- [iOS(Objective-C) 端示例代码详细说明](./ios-oc/README.md)
+
+
+## 五、注意事项
 
 - 业务后台需要妥善管理播报任务状态（示例使用全局变量，生产环境建议使用数据库）
 - Token 生成需要使用 Token04 算法，确保 `SERVER_SECRET` 安全
