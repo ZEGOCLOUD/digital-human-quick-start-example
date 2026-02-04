@@ -3,7 +3,8 @@ import { getBroadcastList, startBroadcast, stopBroadcast } from "../../../lib/br
 
 export const runtime = "nodejs";
 
-// 测试，不做跨域限制
+// CORS 头配置（测试环境，不做跨域限制）
+// Configure CORS headers for testing (no cross-origin restrictions)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
@@ -11,6 +12,7 @@ const corsHeaders = {
 };
 
 // 处理 OPTIONS 预检请求
+// Handle OPTIONS preflight request
 export const OPTIONS = async () => {
   return new NextResponse(null, {
     status: 200,
@@ -18,11 +20,13 @@ export const OPTIONS = async () => {
   });
 };
 
-// GET /api/broadcast - 获取播报列表
+// GET /api/broadcast - 获取当前播报任务列表
+// Get current broadcast task list
 export const GET = async () => {
   const broadcastList = getBroadcastList() || {};
 
   // 过滤掉不可序列化的 timer 对象
+  // Filter out non-serializable timer objects
   const sanitizedList = {};
   for (const [index, info] of Object.entries(broadcastList)) {
     sanitizedList[index] = {
@@ -33,6 +37,7 @@ export const GET = async () => {
       clientInferencePackageUrl: info.clientInferencePackageUrl,
       isSupportSmallImageMode: info.isSupportSmallImageMode,
       // timer 不可序列化，不返回
+      // timer is not serializable, exclude from response
     };
   }
 
@@ -43,7 +48,8 @@ export const GET = async () => {
   });
 };
 
-// POST /api/broadcast - 开始播报
+// POST /api/broadcast - 开始新的播报任务
+// Start a new broadcast task
 export const POST = async (request) => {
   try {
     const body = await request.json();
@@ -58,7 +64,7 @@ export const POST = async (request) => {
     await startBroadcast(body);
     return NextResponse.json({
       success: true,
-      message: "播报任务已启动"
+      message: "Broadcast task started"
     }, {
       headers: corsHeaders,
     });
@@ -74,7 +80,8 @@ export const POST = async (request) => {
   }
 };
 
-// DELETE /api/broadcast/:index - 停止指定播报
+// DELETE /api/broadcast/:index - 停止指定的播报任务
+// Stop the specified broadcast task
 export const DELETE = async (request) => {
   try {
     const { searchParams } = new URL(request.url);
@@ -83,7 +90,7 @@ export const DELETE = async (request) => {
     if (index === null) {
       return NextResponse.json({
         success: false,
-        error: "缺少 index 参数"
+        error: "Missing index parameter"
       }, {
         status: 400,
         headers: corsHeaders,
@@ -93,7 +100,7 @@ export const DELETE = async (request) => {
     await stopBroadcast(Number(index));
     return NextResponse.json({
       success: true,
-      message: `播报任务 ${index} 已停止`
+      message: `Broadcast task ${index} stopped`
     }, {
       headers: corsHeaders,
     });

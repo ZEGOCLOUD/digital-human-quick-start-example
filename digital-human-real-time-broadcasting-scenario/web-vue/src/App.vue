@@ -7,15 +7,17 @@ const toNumber = (value, fallback) => {
 }
 
 // 从环境变量获取配置
+// Get configuration from environment variables
 const clientConfig = {
   appId: toNumber(import.meta.env.VITE_APP_ID, 0),
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 }
 
-// 生成随机用户 ID
+// 生成随机用户 ID。实际请按业务需求生成用户 ID
+// Generate random user ID. Please generate user ID according to business requirements in actual use.
 const generateUserId = () => `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
-const status = ref('初始化中...')
+const status = ref('Initializing...')
 const roomInfo = ref(null)
 let engine = null
 let currentRoom = null
@@ -24,17 +26,19 @@ let stopped = false
 onMounted(async () => {
   try {
     // 检查配置
+    // Check configuration
     if (!clientConfig.appId) {
-      status.value = '请检查 VITE_APP_ID'
+      status.value = 'Please check VITE_APP_ID'
       return
     }
 
     // 步骤1：从业务后台获取播报列表
-    status.value = '从业务后台获取播报列表中...'
+    // Step 1: Fetch broadcast list from backend
+    status.value = 'Fetching broadcast list from backend...'
     const broadcastResponse = await fetch(`${clientConfig.apiBaseUrl}/api/broadcast`, { cache: 'no-store' })
 
     if (!broadcastResponse.ok) {
-      status.value = '获取播报列表失败'
+      status.value = 'Failed to fetch broadcast list'
       return
     }
 
@@ -43,23 +47,25 @@ onMounted(async () => {
     const broadcastKeys = Object.keys(broadcasts)
 
     if (broadcastKeys.length === 0) {
-      status.value = '没有可用播报，请先在配置页面启动播报任务'
+      status.value = 'No available broadcast, please start broadcast task on configuration page first'
       return
     }
 
     // 仅作示例。选择第一个播报
+    // For demo only. Select first broadcast
     const firstIndex = broadcastKeys[0]
     const broadcast = broadcasts[firstIndex]
 
     if (stopped) return
 
     // 步骤2：获取用于登录 RTC 房间的 Token
-    status.value = '获取 Token 中...'
+    // Step 2: Get token for RTC room login
+    status.value = 'Fetching token...'
     const userId = generateUserId()
     const tokenResponse = await fetch(`${clientConfig.apiBaseUrl}/api/token?userId=${userId}`)
 
     if (!tokenResponse.ok) {
-      status.value = '获取 Token 失败'
+      status.value = 'Failed to fetch token'
       return
     }
 
@@ -75,25 +81,28 @@ onMounted(async () => {
     if (stopped) return
     roomInfo.value = currentRoom
 
-    status.value = '初始化拉流中...'
+    status.value = 'Initializing stream player...'
 
     // 步骤3：动态导入并初始化 ZegoExpressEngine
+    // Step 3: Dynamically import and initialize ZegoExpressEngine
     const { ZegoExpressEngine } = await import('zego-express-engine-webrtc')
     engine = new ZegoExpressEngine(clientConfig.appId, "")
 
     // 步骤4：登录实时音视频 (RTC) 房间
+    // Step 4: Login to Real-Time Communication (RTC) room
     await engine.loginRoom(currentRoom.roomId, currentRoom.token, {
       userID: currentRoom.userId,
       userName: currentRoom.userId
     })
 
     // 步骤5：拉取数字人音视频流
+    // Step 5: Play digital human audio/video stream
     const remoteStream = await engine.startPlayingStream(currentRoom.streamId)
     const remoteView = engine.createRemoteStreamView(remoteStream)
     remoteView.play('remote-video')
-    status.value = '播放中...'
+    status.value = 'Playing...'
   } catch (error) {
-    status.value = `启动失败: ${error?.message || '未知错误'}`
+    status.value = `Startup failed: ${error?.message || 'Unknown error'}`
   }
 })
 
@@ -110,10 +119,10 @@ onUnmounted(() => {
 <template>
   <div class="container">
     <header class="header">
-      <h1>数字人快速开始</h1>
-      <p class="status">状态：{{ status }}</p>
+      <h1>Digital Human Quick Start</h1>
+      <p class="status">Status: {{ status }}</p>
       <p v-if="roomInfo" class="room-info">
-        房间：{{ roomInfo.roomId }} · 流：{{ roomInfo.streamId }}
+        Room: {{ roomInfo.roomId }} · Stream: {{ roomInfo.streamId }}
       </p>
     </header>
 

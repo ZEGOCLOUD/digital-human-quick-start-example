@@ -1,11 +1,15 @@
-import { createCipheriv, randomBytes } from "crypto";
+import { createCipheriv } from "crypto";
 
+// 生成随机 Nonce 值
+// Generate a random Nonce value
 const makeNonce = () => {
   const min = -2147483648;
   const max = 2147483647;
   return Math.ceil(min + (max - min) * Math.random());
 };
 
+// 生成随机初始化向量（IV）
+// Generate a random initialization vector (IV)
 const makeRandomIv = () => {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
   const out = [];
@@ -15,14 +19,18 @@ const makeRandomIv = () => {
   return out.join("");
 };
 
+// 根据密钥长度获取对应的 AES 加密算法
+// Get the corresponding AES encryption algorithm based on key length
 const getAlgorithm = (key) => {
   const length = Buffer.from(key).length;
   if (length === 16) return "aes-128-cbc";
   if (length === 24) return "aes-192-cbc";
   if (length === 32) return "aes-256-cbc";
-  throw new Error(`ServerSecret 长度非法: ${length}`);
+  throw new Error(`Invalid ServerSecret length: ${length}`);
 };
 
+// 使用 AES 算法加密明文
+// Encrypt plain text using AES algorithm
 const aesEncrypt = (plainText, key, iv) => {
   const cipher = createCipheriv(getAlgorithm(key), key, iv);
   cipher.setAutoPadding(true);
@@ -30,6 +38,8 @@ const aesEncrypt = (plainText, key, iv) => {
   return Uint8Array.from(encrypted).buffer;
 };
 
+// 生成 ZEGO Token（版本 04）
+// Generate ZEGO Token (version 04)
 export const generateToken04 = (
   appId,
   userId,
@@ -38,16 +48,16 @@ export const generateToken04 = (
   payload = ""
 ) => {
   if (!appId || typeof appId !== "number") {
-    throw new Error("appId 无效");
+    throw new Error("Invalid appId");
   }
   if (!userId) {
-    throw new Error("userId 无效");
+    throw new Error("Invalid userId");
   }
   if (!secret || secret.length !== 32) {
-    throw new Error("ServerSecret 必须为 32 位字符串");
+    throw new Error("ServerSecret must be a 32-character string");
   }
   if (!effectiveTimeInSeconds) {
-    throw new Error("effectiveTimeInSeconds 无效");
+    throw new Error("Invalid effectiveTimeInSeconds");
   }
 
   const createTime = Math.floor(Date.now() / 1000);
@@ -64,6 +74,8 @@ export const generateToken04 = (
   const iv = makeRandomIv();
   const encryptBuf = aesEncrypt(plainText, secret, iv);
 
+  // 构建二进制缓冲区，存储过期时间、IV 长度、加密内容长度等信息
+  // Build binary buffer to store expiration time, IV length, encrypted content length, etc.
   const b1 = new Uint8Array(8);
   const b2 = new Uint8Array(2);
   const b3 = new Uint8Array(2);
@@ -71,6 +83,8 @@ export const generateToken04 = (
   new DataView(b2.buffer).setUint16(0, iv.length, false);
   new DataView(b3.buffer).setUint16(0, encryptBuf.byteLength, false);
 
+  // 拼接所有二进制数据并返回 Base64 编码的 Token
+  // Concatenate all binary data and return Base64 encoded token
   const buf = Buffer.concat([
     Buffer.from(b1),
     Buffer.from(b2),

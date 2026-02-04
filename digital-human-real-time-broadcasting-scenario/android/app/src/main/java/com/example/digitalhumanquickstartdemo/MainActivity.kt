@@ -39,15 +39,18 @@ class MainActivity : AppCompatActivity(),
     IZegoDigitalMobile.ZegoDigitalMobileListener {
 
     // UI组件
+    // UI components
     private lateinit var tvStatus: TextView
     private lateinit var tvRoomInfo: TextView
     private lateinit var digitalHumanView: ZegoDigitalView
 
     // SDK实例
+    // SDK instances
     private var expressEngine: ZegoExpressEngine? = null
     private var digitalMobile: IZegoDigitalMobile? = null
 
     // 房间信息
+    // Room information
     private var currentRoomId: String? = null
     private var currentStreamId: String? = null
     private var currentUserId: String? = null
@@ -63,15 +66,18 @@ class MainActivity : AppCompatActivity(),
         initViews()
 
         // 检查配置
+        // Check configuration
         if (Config.APP_ID == 0L) {
-            updateStatus("请在 Config.kt 中配置 APP_ID")
+            updateStatus("Please configure APP_ID in Config.kt")
             return
         }
 
         // 先初始化SDK
+        // Initialize SDKs first
         initSDKs()
 
         // 启动数字人播放流程
+        // Start digital human playback process
         startDigitalHuman()
     }
 
@@ -83,9 +89,11 @@ class MainActivity : AppCompatActivity(),
 
     /**
      * 初始化 Express SDK 和数字人 SDK
+     * Initialize Express SDK and Digital Human SDK
      */
     private fun initSDKs() {
         // 初始化 Express SDK
+        // Initialize Express SDK
         val profile = ZegoEngineProfile()
         profile.appID = Config.APP_ID
         profile.scenario = ZegoScenario.HIGH_QUALITY_CHATROOM
@@ -93,59 +101,67 @@ class MainActivity : AppCompatActivity(),
         expressEngine = ZegoExpressEngine.createEngine(profile, null)
 
         // 初始化数字人SDK
+        // Initialize Digital Human SDK
         digitalMobile = ZegoDigitalHuman.create(this)
         digitalMobile?.attach(digitalHumanView)
     }
 
     /**
      * 启动数字人播放流程
+     * Start digital human playback process
      */
     private fun startDigitalHuman() {
         Executors.newSingleThreadExecutor().execute {
             try {
                 // 步骤1: 从业务后台获取播报列表
-                updateStatus("获取播报列表中...")
+                // Step 1: Fetch broadcast list from backend
+                updateStatus("Fetching broadcast list...")
                 val broadcast = fetchBroadcastList()
                 if (broadcast == null) {
-                    updateStatus("没有可用播报，请先在服务端启动播报任务")
+                    updateStatus("No available broadcast, please start broadcast task on server first")
                     return@execute
                 }
 
                 // 保存房间信息
+                // Save room information
                 currentRoomId = broadcast.roomId
                 currentStreamId = broadcast.streamId
 
                 runOnUiThread {
-                    tvRoomInfo.text = "房间: ${broadcast.roomId} | 流: ${broadcast.streamId}"
+                    tvRoomInfo.text = "Room: ${broadcast.roomId} | Stream: ${broadcast.streamId}"
                 }
 
                 // 步骤2: 获取Token并登录房间
-                updateStatus("获取 Token 中...")
+                // Step 2: Get token and login to room
+                updateStatus("Fetching token...")
                 val userId = "user_${System.currentTimeMillis()}"
                 currentUserId = userId
                 val token = fetchToken(userId)
                 if (token == null) {
-                    updateStatus("获取 Token 失败")
+                    updateStatus("Failed to fetch token")
                     return@execute
                 }
 
                 // 步骤3: 预加载数字人资源
-                updateStatus("预加载数字人资源...")
+                // Step 3: Preload digital human resources
+                updateStatus("Preloading digital human resources...")
                 preloadDigitalHumanResources(userId, token, broadcast.digitalHumanId)
 
                 // 步骤4: 登录房间（登录成功后会启动数字人）
-                updateStatus("登录房间中...")
+                // Step 4: Login to room (digital human will start after successful login)
+                updateStatus("Logging in to room...")
                 loginRoom(broadcast.roomId, broadcast.streamId, userId, token, broadcast)
 
             } catch (e: Exception) {
-                Log.e("DigitalHumanDemo", "启动失败", e)
-                updateStatus("启动失败: ${e.message}")
+                Log.e("DigitalHumanDemo", "Startup failed", e)
+                updateStatus("Startup failed: ${e.message}")
             }
         }
     }
 
     /**
      * 预加载数字人资源
+     * Preload digital human resources
      */
     private fun preloadDigitalHumanResources(userId: String, token: String, digitalHumanId: String) {
         val auth = ZegoDigitalMobileAuth(Config.APP_ID, userId, token)
@@ -155,15 +171,16 @@ class MainActivity : AppCompatActivity(),
             digitalHumanId,
             object : ZegoDigitalHumanResource.PreloadCallback {
                 override fun onSuccess() {
-                    Log.e("DigitalHumanDemo", "预加载成功")
+                    Log.d("DigitalHumanDemo", "Preload success")
                 }
 
                 override fun onProgress(progress: Int) {
                     // 预加载进度（可选显示）
+                    // Preload progress (optional display)
                 }
 
                 override fun onError(code: Int, msg: String) {
-                    Log.e("DigitalHumanDemo", "预加载失败: $code, $msg")
+                    Log.e("DigitalHumanDemo", "Preload failed: $code, $msg")
                 }
             }
         )
@@ -171,15 +188,17 @@ class MainActivity : AppCompatActivity(),
 
     /**
      * 登录房间
+     * Login to room
      */
     private fun loginRoom(roomId: String, streamId: String, userId: String, token: String, broadcast: BroadcastInfo) {
         val engine = expressEngine
         if (engine == null) {
-            updateStatus("错误：RTC引擎未初始化")
+            updateStatus("Error: RTC engine not initialized")
             return
         }
 
         // 设置高级配置
+        // Set advanced configurations
         val engineConfig = ZegoEngineConfig()
         engineConfig.advancedConfig["set_audio_volume_ducking_mode"] = "1"
         engineConfig.advancedConfig["enable_rnd_volume_adaptive"] = "true"
@@ -200,9 +219,11 @@ class MainActivity : AppCompatActivity(),
                 isRoomLoggedIn = true
 
                 // 登录成功后：开启自定义渲染
+                // After successful login: enable custom video rendering
                 enableCustomVideoRender()
 
                 // 启动数字人SDK
+                // Start digital human SDK
                 val base64Config = generateBase64Config(
                     broadcast.digitalHumanId,
                     broadcast.roomId,
@@ -212,14 +233,15 @@ class MainActivity : AppCompatActivity(),
                 )
                 startDigitalHumanSDK(base64Config)
             } else {
-                Log.e("DigitalHumanDemo", "登录房间失败: $errorCode")
-                updateStatus("登录房间失败: $errorCode")
+                Log.e("DigitalHumanDemo", "Room login failed: $errorCode")
+                updateStatus("Room login failed: $errorCode")
             }
         }
     }
 
     /**
      * 开启自定义视频渲染
+     * Enable custom video rendering
      */
     private fun enableCustomVideoRender() {
         val renderConfig = ZegoCustomVideoRenderConfig()
@@ -229,6 +251,7 @@ class MainActivity : AppCompatActivity(),
         expressEngine?.enableCustomVideoRender(true, renderConfig)
 
         // 设置视频帧回调
+        // Set video frame callback
         expressEngine?.setCustomVideoRenderHandler(object : IZegoCustomVideoRenderHandler() {
             override fun onRemoteVideoFrameRawData(
                 data: Array<ByteBuffer>?,
@@ -243,6 +266,7 @@ class MainActivity : AppCompatActivity(),
                     dmParam.rotation = param.rotation
 
                     // 转换format
+                    // Convert format
                     dmParam.format = when (param.format) {
                         ZegoVideoFrameFormat.I420 ->
                             IZegoDigitalMobile.ZegoVideoFrameFormat.I420
@@ -255,6 +279,7 @@ class MainActivity : AppCompatActivity(),
                     }
 
                     // 复制 strides
+                    // Copy strides
                     if (param.strides != null && param.strides.size >= 4) {
                         for (i in 0 until 4) {
                             dmParam.strides[i] = param.strides[i]
@@ -262,12 +287,14 @@ class MainActivity : AppCompatActivity(),
                     }
 
                     // 重要：将视频帧数据设置到数字人 SDK
+                    // IMPORTANT: Set video frame data to digital human SDK
                     digitalMobile?.onRemoteVideoFrameRawData(data, dataLength, dmParam, streamID)
                 }
             }
         })
 
         // 设置事件处理器（包含SEI回调和流更新回调）
+        // Set event handler (includes SEI callback and stream update callback)
         expressEngine?.setEventHandler(object : IZegoEventHandler() {
             override fun onRoomStreamUpdate(
                 roomID: String?,
@@ -285,6 +312,7 @@ class MainActivity : AppCompatActivity(),
             }
 
             // 重要：将 SEI 信息设置到数字人 SDK
+            // IMPORTANT: Set SEI data to digital human SDK
             override fun onPlayerSyncRecvSEI(streamID: String?, data: ByteArray?) {
                 if (streamID != null && data != null) {
                     digitalMobile?.onPlayerSyncRecvSEI(streamID, data)
@@ -295,39 +323,44 @@ class MainActivity : AppCompatActivity(),
 
     /**
      * 开始拉流
+     * Start playing stream
      */
     private fun startPlayingStream(streamID: String) {
         val engine = expressEngine ?: return
 
         // 设置拉流缓冲区
+        // Set stream buffer interval range
         engine.setPlayStreamBufferIntervalRange(streamID, 100, 2000)
 
         // 开始拉流
+        // Start playing stream
         val canvas = im.zego.zegoexpress.entity.ZegoCanvas(null)
         engine.startPlayingStream(streamID, canvas)
 
-        updateStatus("播放中...")
+        updateStatus("Playing...")
     }
 
     /**
      * 启动数字人SDK
+     * Start digital human SDK
      */
     private fun startDigitalHumanSDK(base64Config: String) {
         if (digitalMobile == null) {
-            updateStatus("数字人SDK未初始化")
+            updateStatus("Digital human SDK not initialized")
             return
         }
 
         try {
             digitalMobile?.start(base64Config, this)
         } catch (e: Exception) {
-            Log.e("DigitalHumanDemo", "数字人SDK启动失败", e)
-            updateStatus("数字人SDK启动失败: ${e.message}")
+            Log.e("DigitalHumanDemo", "Failed to start digital human SDK", e)
+            updateStatus("Failed to start digital human SDK: ${e.message}")
         }
     }
 
     /**
      * 生成 Base64Config
+     * Generate Base64Config
      */
     private fun generateBase64Config(
         digitalHumanId: String,
@@ -360,6 +393,7 @@ class MainActivity : AppCompatActivity(),
 
     /**
      * 获取播报列表
+     * Fetch broadcast list
      */
     private fun fetchBroadcastList(): BroadcastInfo? {
         val request = Request.Builder()
@@ -368,7 +402,7 @@ class MainActivity : AppCompatActivity(),
 
         val response = httpClient.newCall(request).execute()
         if (!response.isSuccessful) {
-            Log.e("DigitalHumanDemo", "获取播报列表失败: ${response.code}")
+            Log.e("DigitalHumanDemo", "Failed to fetch broadcast list: ${response.code}")
             return null
         }
 
@@ -396,6 +430,7 @@ class MainActivity : AppCompatActivity(),
 
     /**
      * 获取Token
+     * Fetch token
      */
     private fun fetchToken(userId: String): String? {
         val request = Request.Builder()
@@ -404,7 +439,7 @@ class MainActivity : AppCompatActivity(),
 
         val response = httpClient.newCall(request).execute()
         if (!response.isSuccessful) {
-            Log.e("DigitalHumanDemo", "获取Token失败: ${response.code}")
+            Log.e("DigitalHumanDemo", "Failed to fetch token: ${response.code}")
             return null
         }
 
@@ -415,42 +450,48 @@ class MainActivity : AppCompatActivity(),
 
     /**
      * 更新状态显示
+     * Update status display
      */
     private fun updateStatus(msg: String) {
         runOnUiThread {
-            tvStatus.text = "状态：$msg"
+            tvStatus.text = "Status: $msg"
         }
     }
 
     // ==================== IZegoDigitalMobile.ZegoDigitalMobileListener 回调 ====================
+    // ==================== IZegoDigitalMobile.ZegoDigitalMobileListener callbacks ====================
 
     override fun onDigitalMobileStartSuccess() {
-        updateStatus("数字人启动成功")
+        updateStatus("Digital human started successfully")
     }
 
     override fun onError(errorCode: Int, errorMsg: String?) {
-        Log.e("DigitalHumanDemo", "数字人SDK错误: $errorCode, $errorMsg")
-        updateStatus("数字人错误: $errorMsg")
+        Log.e("DigitalHumanDemo", "Digital human SDK error: $errorCode, $errorMsg")
+        updateStatus("Digital human error: $errorMsg")
     }
 
     override fun onSurfaceFirstFrameDraw() {
-        updateStatus("数字人播放中")
+        updateStatus("Digital human playing")
     }
 
     // ==================== 生命周期 ====================
+    // ==================== Lifecycle ====================
 
     override fun onDestroy() {
         super.onDestroy()
 
         // 停止数字人
+        // Stop digital human
         digitalMobile?.stop()
 
         // 停止拉流
+        // Stop playing stream
         currentStreamId?.let {
             expressEngine?.stopPlayingStream(it)
         }
 
         // 退出房间
+        // Logout room
         if (isRoomLoggedIn) {
             currentRoomId?.let {
                 expressEngine?.logoutRoom()
@@ -458,6 +499,7 @@ class MainActivity : AppCompatActivity(),
         }
 
         // 销毁引擎
+        // Destroy engine
         ZegoExpressEngine.destroyEngine(null)
     }
 }

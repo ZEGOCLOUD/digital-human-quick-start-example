@@ -1,11 +1,14 @@
 import crypto from "crypto";
 
-
+// 构建通用 API 请求参数（包含签名）
+// Build common API request parameters (including signature)
 const buildCommonParams = (action) => {
   const appId = process.env.APP_ID;
   const serverSecret = process.env.SERVER_SECRET || "";
   const signatureNonce = crypto.randomBytes(8).toString("hex");
   const timestamp = Math.floor(Date.now() / 1000);
+  // 计算 MD5 签名
+  // Calculate MD5 signature
   const signature = crypto
     .createHash("md5")
     .update(`${appId}${signatureNonce}${serverSecret}${timestamp}`)
@@ -21,11 +24,9 @@ const buildCommonParams = (action) => {
   });
 };
 
-const post = async (
-  action,
-  body
-) => {
-
+// 发送 POST 请求到 ZEGO 数字人 API
+// Send POST request to ZEGO Digital Human API
+const post = async (action, body) => {
   const params = buildCommonParams(action);
   const url = `https://aigc-digitalhuman-api.zegotech.cn/?${params.toString()}`;
   const response = await fetch(url, {
@@ -35,11 +36,13 @@ const post = async (
   });
   const data = await response.json();
   if (data.Code !== 0) {
-    throw new Error(`数字人 API 失败: ${data.Code} ${data.Message}`);
+    throw new Error(`Digital Human API failed: ${data.Code} ${data.Message}`);
   }
   return data.Data;
 };
 
+// 创建数字人视频流任务
+// Create digital human video stream task
 export const createStreamTask = async (params) => {
   const data = await post(
     "CreateDigitalHumanStreamTask",
@@ -52,6 +55,8 @@ export const createStreamTask = async (params) => {
   return data.TaskId;
 };
 
+// 通过文本驱动数字人播报
+// Drive digital human broadcast by text
 export const driveByText = async (params) => {
   await post(
     "DriveByText",
@@ -69,6 +74,8 @@ export const driveByText = async (params) => {
   );
 };
 
+// 停止数字人视频流任务
+// Stop digital human video stream task
 export const stopStreamTask = async (params) => {
   await post(
     "StopDigitalHumanStreamTask",
@@ -76,6 +83,8 @@ export const stopStreamTask = async (params) => {
   );
 };
 
+// 获取音色列表
+// Get timbre list
 export const getTimbreList = async (params) => {
   const body = {};
   if (params.digitalHumanId) {
@@ -87,13 +96,12 @@ export const getTimbreList = async (params) => {
   if (params.limit !== undefined) {
     body.Limit = params.limit;
   }
-  const data = await post(
-    "GetTimbreList",
-    body
-  );
+  const data = await post("GetTimbreList", body);
   return data;
 };
 
+// 获取数字人列表
+// Get digital human list
 export const getDigitalHumanList = async (params) => {
   const body = {};
   if (params.inferenceMode !== undefined) {
@@ -109,15 +117,14 @@ export const getDigitalHumanList = async (params) => {
     body.Limit = params.limit;
   }
 
-  const data = await post(
-    "GetDigitalHumanList",
-    body
-  );
+  const data = await post("GetDigitalHumanList", body);
   return data;
 };
 
-
-// TODO：新版本SDK不需要这个，临时保留。获取数字人渲染信息。Android和iOS需要使用渲染信息中的素材包下载地址启动数字人SDK。
+// TODO：新版本 SDK 不需要此函数，临时保留
+// TODO: New version SDK doesn't need this, temporarily reserved
+// 获取数字人渲染信息（Android/iOS 需要使用素材包下载地址）
+// Get digital human render info (Android/iOS need the asset package download URL)
 export const getDigitalHumanRenderInfo = async (params) => {
   const data = await post(
     "GetDigitalHumanRenderInfo",
@@ -129,39 +136,37 @@ export const getDigitalHumanRenderInfo = async (params) => {
   };
 };
 
-
 // 查询正在运行的数字人视频流任务
+// Query running digital human video stream tasks
 export const queryStreamTasks = async () => {
-  const data = await post(
-    "QueryDigitalHumanStreamTasks",
-    {}
-  );
+  const data = await post("QueryDigitalHumanStreamTasks", {});
   return data.TaskList || [];
 };
 
 // 清理所有正在运行的数字人任务
+// Clear all running digital human tasks
 export const clearAllTasks = async () => {
   try {
     const taskList = await queryStreamTasks();
 
     if (taskList.length === 0) {
-      console.log("[clearAllTasks] 没有需要清理的任务");
+      console.log("[clearAllTasks] No tasks to clean up");
       return;
     }
 
-    console.log(`[clearAllTasks] 发现 ${taskList.length} 个正在运行的任务，开始清理...`);
+    console.log(`[clearAllTasks] Found ${taskList.length} running tasks, starting cleanup...`);
 
     for (const task of taskList) {
       try {
         await stopStreamTask({ taskId: task.TaskId });
-        console.log(`[clearAllTasks] 已停止任务 - TaskId: ${task.TaskId}, RoomId: ${task.RoomId}, StreamId: ${task.StreamId}, Status: ${task.Status}`);
+        console.log(`[clearAllTasks] Stopped task - TaskId: ${task.TaskId}, RoomId: ${task.RoomId}, StreamId: ${task.StreamId}, Status: ${task.Status}`);
       } catch (error) {
-        console.log(`[clearAllTasks] 停止任务失败 - TaskId: ${task.TaskId}, 错误: ${error.message}`);
+        console.log(`[clearAllTasks] Failed to stop task - TaskId: ${task.TaskId}, Error: ${error.message}`);
       }
     }
 
-    console.log("[clearAllTasks] 清理完成");
+    console.log("[clearAllTasks] Cleanup completed");
   } catch (error) {
-    console.error("[clearAllTasks] 查询任务失败:", error.message);
+    console.error("[clearAllTasks] Failed to query tasks:", error.message);
   }
 };

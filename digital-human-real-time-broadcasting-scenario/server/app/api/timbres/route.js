@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getTimbreList } from "../../../lib/digitalHuman.js";
 
 const toNumber = (value, fallback) => {
@@ -8,6 +8,8 @@ const toNumber = (value, fallback) => {
 
 export const runtime = "nodejs";
 
+// GET 请求处理器：获取音色列表
+// Get timbre list
 export const GET = async (request) => {
   try {
     const appId = toNumber(process.env.APP_ID, 0);
@@ -24,7 +26,7 @@ export const GET = async (request) => {
 
     if (!appId || !serverSecret) {
       return NextResponse.json(
-        { error: "APP_ID 或 SERVER_SECRET 未配置" },
+        { error: "APP_ID or SERVER_SECRET not configured" },
         { status: 500 }
       );
     }
@@ -37,17 +39,17 @@ export const GET = async (request) => {
       limit,
     });
 
-    console.log("音色列表API返回:", {
-      digitalHumanId: digitalHumanId || "(空，查询公共音色)",
+    console.log("Timbre list API response:", {
+      digitalHumanId: digitalHumanId || "(empty, querying public timbres)",
       total: result?.Total,
       timbresCount: result?.Timbres?.length || 0,
     });
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("获取音色列表失败:", error);
+    console.error("Failed to get timbre list:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "未知错误" },
+      { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

@@ -3,6 +3,8 @@ import { getDigitalHumanList } from "../../../lib/digitalHuman.js";
 
 export const runtime = "nodejs";
 
+// GET 请求处理器：获取数字人列表
+// Get digital human list
 export const GET = async (request) => {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -28,9 +30,9 @@ export const GET = async (request) => {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("获取数字人列表失败:", error);
+    console.error("Failed to get digital human list:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "未知错误" },
+      { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
