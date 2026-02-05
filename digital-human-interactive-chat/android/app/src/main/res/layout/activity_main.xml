@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 数字人视频区域 -->
+    <!-- Digital human video area -->
+    <im.zego.digitalmobile.ZegoDigitalView
+        android:id="@+id/digitalHumanView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000" />
+
+    <!-- 标题 -->
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="数字人交互聊天示例\nDigital Human Interactive Chat Example"
+        android:textSize="20sp"
+        android:textColor="#333333"
+        android:gravity="center"
+        android:layout_gravity="center" />
+
+    <!-- 状态显示 -->
+    <!-- Status display -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Status: waiting for initialization..."
+        android:textSize="16sp" />
+
+    <!-- 说明文字 -->
+    <!-- Note -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="正常逻辑是客户端采集用户说话音频后发送至业务后台\nIn normal operation, the client captures user speech audio and sends it to the backend"
+        android:textSize="12sp"
+        android:textColor="#999999"
+        android:gravity="center" />
+
+    <!-- 按钮区域 -->
+    <!-- Button area -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnStartCall"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Start Call\n开始通话" />
+
+        <Button
+            android:id="@+id/btnStopCall"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:text="Stop Call\n结束通话" />
+    </LinearLayout>
+
+    <!-- 模拟说话按钮 -->
+    <!-- Simulate talk buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnSimulateTalkZh"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:text="Simulate User Speech (ZH)\n模拟用户说话(中文)" />
+
+        <Button
+            android:id="@+id/btnSimulateTalkEn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:text="Simulate User Speech (EN)\n模拟用户说话(英文)" />
+    </LinearLayout>
+
+</LinearLayout>
