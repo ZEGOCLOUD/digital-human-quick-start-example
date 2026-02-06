@@ -12,10 +12,10 @@
 #import <ZegoDigitalMobile/ZegoDigitalMobile.h>
 
 // ========== 常量定义 / Constant Definitions ==========
-// 固定ID以便预加载数字人资源 / Fixed IDs for preloading digital human resources
-static NSString *const kFixedUserId = @"user_demo_ios";
-static NSString *const kFixedRoomId = @"room_demo_ios";
-static NSString *const kFixedStreamId = @"stream_demo_ios";
+// ID前缀（用于生成动态ID）/ ID prefixes (for generating dynamic IDs)
+static NSString *const kUserIdPrefix = @"user_demo_ios";
+static NSString *const kRoomIdPrefix = @"room_demo_ios";
+static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 
 // ========== 1. 内部接口扩展 ==========
 // ========== 1. Internal interface extensions ==========
@@ -94,16 +94,16 @@ static NSString *const kFixedStreamId = @"stream_demo_ios";
 
     // 标题标签 / Title label
     UILabel *titleLabel = [[UILabel alloc] init];
-    titleLabel.text = @"数字人交互聊天示例\nDigital Human Interactive Chat Example";
-    titleLabel.font = [UIFont boldSystemFontOfSize:18];
+    titleLabel.text = @"数字人交互聊天\nDigital Human Chat";
+    titleLabel.font = [UIFont boldSystemFontOfSize:14];
     titleLabel.numberOfLines = 0;
     titleLabel.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:titleLabel];
 
     // 状态标签 / Status label
     self.tvStatus = [[UILabel alloc] init];
-    self.tvStatus.text = @"Status: waiting for initialization...";
-    self.tvStatus.font = [UIFont systemFontOfSize:14];
+    self.tvStatus.text = @"Status: waiting...";
+    self.tvStatus.font = [UIFont systemFontOfSize:11];
     self.tvStatus.numberOfLines = 0;
     self.tvStatus.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:self.tvStatus];
@@ -112,7 +112,7 @@ static NSString *const kFixedStreamId = @"stream_demo_ios";
     UILabel *noteLabel = [[UILabel alloc] init];
     noteLabel.text = @"正常逻辑是客户端采集用户说话音频后发送至业务后台\nIn normal operation, the client captures user speech audio and sends it to the backend";
     noteLabel.textColor = [UIColor secondaryLabelColor];
-    noteLabel.font = [UIFont systemFontOfSize:11];
+    noteLabel.font = [UIFont systemFontOfSize:9];
     noteLabel.numberOfLines = 0;
     noteLabel.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:noteLabel];
@@ -163,48 +163,49 @@ static NSString *const kFixedStreamId = @"stream_demo_ios";
     self.btnSimulateTalkEn.translatesAutoresizingMaskIntoConstraints = NO;
 
     [NSLayoutConstraint activateConstraints:@[
-        // Title label constraints
-        [titleLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:20],
-        [titleLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [titleLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        // Title label constraints - minimal top spacing
+        [titleLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:2],
+        [titleLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
+        [titleLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
 
-        // Status label constraints
-        [self.tvStatus.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:20],
-        [self.tvStatus.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [self.tvStatus.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        // Status label constraints - minimal spacing
+        [self.tvStatus.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:2],
+        [self.tvStatus.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
+        [self.tvStatus.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
 
-        // Note label constraints
-        [noteLabel.topAnchor constraintEqualToAnchor:self.tvStatus.bottomAnchor constant:10],
-        [noteLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [noteLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        // Note label constraints - minimal spacing
+        [noteLabel.topAnchor constraintEqualToAnchor:self.tvStatus.bottomAnchor constant:2],
+        [noteLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
+        [noteLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
 
-        // Digital human container constraints
-        [self.digitalHumanContainerView.topAnchor constraintEqualToAnchor:noteLabel.bottomAnchor constant:20],
+        // Digital human container constraints - maximize height
+        [self.digitalHumanContainerView.topAnchor constraintEqualToAnchor:noteLabel.bottomAnchor constant:4],
         [self.digitalHumanContainerView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.digitalHumanContainerView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.digitalHumanContainerView.heightAnchor constraintEqualToConstant:300],
+        [self.digitalHumanContainerView.heightAnchor constraintEqualToConstant:500],
 
-        // Start/Stop Call buttons
-        [self.btnStartCall.topAnchor constraintEqualToAnchor:self.digitalHumanContainerView.bottomAnchor constant:20],
-        [self.btnStartCall.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [self.btnStartCall.trailingAnchor constraintEqualToAnchor:self.view.centerXAnchor constant:-10],
-        [self.btnStartCall.heightAnchor constraintEqualToConstant:50],
+        // Start/Stop Call buttons - compact
+        [self.btnStartCall.topAnchor constraintEqualToAnchor:self.digitalHumanContainerView.bottomAnchor constant:4],
+        [self.btnStartCall.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
+        [self.btnStartCall.trailingAnchor constraintEqualToAnchor:self.view.centerXAnchor constant:-4],
+        [self.btnStartCall.heightAnchor constraintEqualToConstant:36],
 
-        [self.btnStopCall.topAnchor constraintEqualToAnchor:self.digitalHumanContainerView.bottomAnchor constant:20],
-        [self.btnStopCall.leadingAnchor constraintEqualToAnchor:self.view.centerXAnchor constant:10],
-        [self.btnStopCall.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [self.btnStopCall.heightAnchor constraintEqualToConstant:50],
+        [self.btnStopCall.topAnchor constraintEqualToAnchor:self.digitalHumanContainerView.bottomAnchor constant:4],
+        [self.btnStopCall.leadingAnchor constraintEqualToAnchor:self.view.centerXAnchor constant:4],
+        [self.btnStopCall.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
+        [self.btnStopCall.heightAnchor constraintEqualToConstant:36],
 
-        // Simulate Talk buttons - vertical layout
-        [self.btnSimulateTalkZh.topAnchor constraintEqualToAnchor:self.btnStartCall.bottomAnchor constant:10],
-        [self.btnSimulateTalkZh.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [self.btnSimulateTalkZh.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [self.btnSimulateTalkZh.heightAnchor constraintEqualToConstant:50],
+        // Simulate Talk buttons - compact vertical layout
+        [self.btnSimulateTalkZh.topAnchor constraintEqualToAnchor:self.btnStartCall.bottomAnchor constant:4],
+        [self.btnSimulateTalkZh.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
+        [self.btnSimulateTalkZh.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
+        [self.btnSimulateTalkZh.heightAnchor constraintEqualToConstant:36],
 
-        [self.btnSimulateTalkEn.topAnchor constraintEqualToAnchor:self.btnSimulateTalkZh.bottomAnchor constant:10],
-        [self.btnSimulateTalkEn.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [self.btnSimulateTalkEn.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [self.btnSimulateTalkEn.heightAnchor constraintEqualToConstant:50],
+        [self.btnSimulateTalkEn.topAnchor constraintEqualToAnchor:self.btnSimulateTalkZh.bottomAnchor constant:4],
+        [self.btnSimulateTalkEn.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
+        [self.btnSimulateTalkEn.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
+        [self.btnSimulateTalkEn.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-4],
+        [self.btnSimulateTalkEn.heightAnchor constraintEqualToConstant:36],
     ]];
 }
 
@@ -234,10 +235,11 @@ static NSString *const kFixedStreamId = @"stream_demo_ios";
 
     // 预加载数字人资源 / Preload digital human resources
     [self updateStatus:@"Preloading digital human resources..."];
-    NSString *token = [self fetchToken:kFixedUserId];
+    NSString *userId = [self generateDynamicId:kUserIdPrefix];
+    NSString *token = [self fetchToken:userId];
     if (token) {
         ZegoDigitalHumanAuth *auth = [[ZegoDigitalHumanAuth alloc] initWithAppID:(unsigned int)[Config APP_ID]
-                                                                            userID:kFixedUserId
+                                                                            userID:userId
                                                                              token:token];
         [[ZegoDigitalHumanResource sharedInstance] preloadWithAuth:auth
                                                    digitalHumanId:[Config DIGITAL_HUMAN_ID]
@@ -258,11 +260,11 @@ static NSString *const kFixedStreamId = @"stream_demo_ios";
     // 在后台线程执行网络请求 / Execute network requests in background thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @try {
-            // 1. 使用固定ID / Use fixed IDs
+            // 1. 生成动态ID，仅作示例使用 / Generate dynamic IDs, only for example usage
             [self updateStatus:@"Initializing..."];
-            self.currentUserId = kFixedUserId;
-            NSString *roomId = kFixedRoomId;
-            NSString *streamId = kFixedStreamId;
+            self.currentUserId = [self generateDynamicId:kUserIdPrefix];
+            NSString *roomId = [self generateDynamicId:kRoomIdPrefix];
+            NSString *streamId = [self generateDynamicId:kStreamIdPrefix];
 
             // 2. 调用服务端创建数字人任务 / Call server to create digital human task
             [self updateStatus:@"Creating digital human task..."];
@@ -484,7 +486,11 @@ static NSString *const kFixedStreamId = @"stream_demo_ios";
 
         if (errorCode == 0) {
             strongSelf.isRoomLoggedIn = YES;
+            strongSelf.isCallStarted = YES;
             NSLog(@"[RTC] Room login successful");
+
+            // 更新UI状态 / Update UI state
+            [strongSelf updateUI];
 
             // 登录成功后：开启自定义渲染 / After successful login: enable custom video rendering
             [strongSelf enableCustomVideoRender];
@@ -584,6 +590,15 @@ static NSString *const kFixedStreamId = @"stream_demo_ios";
 }
 
 #pragma mark - 9. Helper Methods
+
+
+- (NSString *)generateDynamicId:(NSString *)prefix {
+    NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
+    NSInteger timestampInt = (NSInteger)timestamp;
+    // 取最后6位 / Take last 6 digits
+    NSInteger sixDigits = timestampInt % 1000000;
+    return [NSString stringWithFormat:@"%@_%06ld", prefix, (long)sixDigits];
+}
 
 /**
  * 生成 Base64Config - 对齐Android的generateBase64Config()

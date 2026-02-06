@@ -48,19 +48,13 @@ npm run dev
 
 ```
 server/
-├── app/
-│   ├── api/                    # API 路由
-│   │   ├── digital-human/      # 数字人相关接口
-│   │   │   ├── create-task/    # 创建数字人任务
-│   │   │   ├── talk-to-ai/     # AI 交互接口
-│   │   │   └── stop-task/      # 停止数字人任务
-│   │   └── token/              # Token 生成
-├── lib/                        # 核心逻辑
-│   ├── digitalHuman.js         # ZEGO 数字人 API 封装
-│   ├── token.js                # Token04 算法实现。用于生成 ZEGO 客户端 SDK 用的 Token
-│   └── websocket.js            # WebSocket 驱动数字人
-├── audio/                      # 音频文件
-│   └── sample.pcm              # 模拟音频文件
+├── index.js                   # 服务入口（HTTP 路由）
+├── lib/                       # 核心逻辑
+│   ├── digitalHuman.js        # ZEGO 数字人 API 封装
+│   ├── token.js               # Token04 算法实现。用于生成 ZEGO 客户端 SDK 用的 Token
+│   └── websocket.js           # WebSocket 驱动数字人
+├── audio/                     # 音频文件
+│   └── sample.pcm             # 模拟音频文件
 └── package.json
 ```
 
@@ -150,5 +144,4 @@ server/
 ```
 
 ---
-
 

@@ -44,12 +44,11 @@ import java.util.concurrent.Executors
 class MainActivity : AppCompatActivity(),
     IZegoDigitalMobile.ZegoDigitalMobileListener {
 
-    // 固定 ID 以便预加载数字人资源
-    // Fixed IDs for preloading digital human resources
+    // ID 前缀（用于生成动态ID）/ ID prefixes (for generating dynamic IDs)
     companion object {
-        private const val FIXED_USER_ID = "user_demo_android"
-        private const val FIXED_ROOM_ID = "room_demo_android"
-        private const val FIXED_STREAM_ID = "stream_demo_android"
+        private const val USER_ID_PREFIX = "user_demo_android"
+        private const val ROOM_ID_PREFIX = "room_demo_android"
+        private const val STREAM_ID_PREFIX = "stream_demo_android"
     }
 
     // UI 组件 / UI components
@@ -74,6 +73,9 @@ class MainActivity : AppCompatActivity(),
 
     private val gson = Gson()
     private val httpClient = OkHttpClient()
+
+    // 任务信息（用于在回调中访问）/ Task info (for access in callbacks)
+    private var pendingTaskInfo: TaskInfo? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -133,8 +135,9 @@ class MainActivity : AppCompatActivity(),
         updateStatus("Preloading digital human resources...")
         Executors.newSingleThreadExecutor().execute {
             try {
-                val token = getToken(FIXED_USER_ID)
-                preloadDigitalHuman(FIXED_USER_ID, token, Config.DIGITAL_HUMAN_ID)
+                val userId = generateDynamicId(USER_ID_PREFIX)
+                val token = getToken(userId)
+                preloadDigitalHuman(userId, token, Config.DIGITAL_HUMAN_ID)
                 Log.d("DH", "Preload started: ${Config.DIGITAL_HUMAN_ID}")
             } catch (e: Exception) {
                 Log.e("DH", "Preload failed", e)
@@ -175,45 +178,47 @@ class MainActivity : AppCompatActivity(),
             try {
                 updateStatus("Initializing...")
 
-                // 1. 使用固定 ID / Use fixed IDs
-                val userId = FIXED_USER_ID
-                val roomId = FIXED_ROOM_ID
-                val streamId = FIXED_STREAM_ID
+                // 1. 生成动态 ID，仅作示例使用 / Generate dynamic IDs, only for example usage
+                val userId = generateDynamicId(USER_ID_PREFIX)
+                val roomId = generateDynamicId(ROOM_ID_PREFIX)
+                val streamId = generateDynamicId(STREAM_ID_PREFIX)
                 currentUserId = userId
 
                 // 2. 调用服务端创建数字人任务 / Call server to create digital human task
-                // (digitalHumanId 由服务端环境变量配置 / digitalHumanId configured in server env)
                 updateStatus("Creating digital human task...")
                 val taskInfo = createDigitalHumanTask(roomId, streamId)
                 currentTaskId = taskInfo.taskId
                 currentRoomId = taskInfo.roomId
                 currentStreamId = taskInfo.streamId
 
+                // 保存任务信息供回调使用 / Save task info for callback use
+                pendingTaskInfo = taskInfo
+
                 // 3. 获取 Token / Get Token
                 updateStatus("Fetching token...")
                 val token = getToken(userId)
-                // 4. 登录房间并拉流 / Login room and start playing
+
+                // 4. 登录房间并拉流（登录成功后会在回调中启动数字人SDK）
+                // Login room and start playing (digital human SDK will start in callback after successful login)
                 updateStatus("Logging in to room...")
                 loginRoomAndStartPlaying(roomId, streamId, userId, token)
 
-                // 5. 启动数字人 SDK / Start digital human SDK
-                val base64Config = generateBase64Config(
-                    taskInfo.digitalHumanId,
-                    taskInfo.roomId,
-                    taskInfo.streamId,
-                    taskInfo.clientInferencePackageUrl,
-                    taskInfo.isSupportSmallImageMode
-                )
-                updateStatus("Starting digital human...")
-                startDigitalHumanSDK(base64Config)
-
-                isCallStarted = true
-                updateUI()
             } catch (e: Exception) {
                 Log.e("DH", "Start call failed", e)
                 updateStatus("Start failed: ${e.message}")
             }
         }
+    }
+
+    /**
+     * 生成动态ID（带6位时间戳后缀）/ Generate dynamic ID (with 6-digit timestamp suffix)
+     * @param prefix ID前缀 / ID prefix
+     * @return 动态ID，格式如 "prefix_123456" / Dynamic ID, format: "prefix_123456"
+     */
+    private fun generateDynamicId(prefix: String): String {
+        val timestamp = System.currentTimeMillis() / 1000 // 秒级时间戳 / Second-level timestamp
+        val sixDigits = timestamp % 1000000
+        return "${prefix}_${sixDigits.toString().padStart(6, '0')}"
     }
 
     /**
@@ -443,7 +448,26 @@ class MainActivity : AppCompatActivity(),
         engine.loginRoom(roomId, user, roomConfig) { errorCode, _ ->
             if (errorCode == 0) {
                 isRoomLoggedIn = true
-                updateStatus("Room logged in")
+                isCallStarted = true
+                updateUI()
+                Log.d("DH", "Room login successful")
+
+                // 登录成功后：启动数字人SDK / After successful login: start digital human SDK
+                val taskInfo = pendingTaskInfo
+                if (taskInfo != null) {
+                    val base64Config = generateBase64Config(
+                        taskInfo.digitalHumanId,
+                        taskInfo.roomId,
+                        taskInfo.streamId,
+                        taskInfo.clientInferencePackageUrl,
+                        taskInfo.isSupportSmallImageMode
+                    )
+                    Log.d("DH", "Starting digital human SDK...")
+                    updateStatus("Starting digital human...")
+                    startDigitalHumanSDK(base64Config)
+                } else {
+                    Log.e("DH", "Task info is null, cannot start digital human")
+                }
             } else {
                 Log.e("DH", "Room login failed: $errorCode")
                 updateStatus("Login failed: $errorCode")
