@@ -78,10 +78,13 @@ export default {
 
         // 2. 生成唯一标识 / Generate unique identifiers
         const userId = `user_${Date.now()}`;
-        const newRoomId = `room_${Date.now()}`;
-        const newStreamId = `stream_${Date.now()}`;
+        const newRoomId = `room_${Date.now()}`;  // 数字人加入的 RTC 房间 ID，每个用户应使用不同的房间 ID / Digital human's RTC room ID, each user should use a different room ID
+        const newStreamId = `stream_${Date.now()}`;  // 数字人推流的流 ID / Digital human's stream ID for pushing stream
 
         // 3. 创建数字人任务 / Create digital human task
+        // POST /api/digital-human/create-task
+        // 请求参数：roomId (数字人加入的房间 ID), streamId (数字人推流的流 ID)
+        // Request parameters: roomId (Digital human's RTC room ID), streamId (Digital human's stream ID)
         // (digitalHumanId 由服务端环境变量配置 / digitalHumanId configured in server env)
         status.value = 'Creating digital human task...';
         const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -93,7 +96,6 @@ export default {
             body: JSON.stringify({
               roomId: newRoomId,
               streamId: newStreamId,
-              outputMode: 1, // Web 模式 / Web mode
             }),
           }
         );

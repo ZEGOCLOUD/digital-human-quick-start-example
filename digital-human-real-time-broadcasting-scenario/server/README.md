@@ -66,6 +66,6 @@ server/
 | 端点 | 方法 | 请求参数 | 说明 |
 |------|------|---------|------|
 | `/api/digital-humans` | GET | - | 获取数字人列表 |
-| `/api/broadcast` | POST | `digitalHumanId`, `timbreId`, `roomId`, `streamId`, `textPool`, `outputMode` | 启动播报任务 |
+| `/api/broadcast` | POST | `digitalHumanId`, `timbreId`, `roomId`, `streamId`, `textPool` | 启动播报任务 |
 | `/api/broadcast?index=N` | DELETE | `index`（查询参数） | 停止指定播报任务 |
 | `/api/timbres` | GET | `digitalHumanId`（可选） | 获取音色列表 |

@@ -55,16 +55,15 @@ android/
 ## 三、核心流程
 
 ```
-获取播报列表 → 获取 Token → 预加载资源 → 登录房间 → 启动数字人
+获取播报列表 → 获取 Token → 登录房间 → 拉流播放
 ```
 
 | 步骤 | 说明 |
 |------|------|
-| 获取播报列表 | 调用 `GET /api/broadcast`，获取 roomId、streamId 和数字人渲染信息 |
+| 获取播报列表 | 调用 `GET /api/broadcast`，获取 roomId、streamId |
 | 获取 Token | 调用 `GET /api/token?userId=xxx`，获取 RTC 登录 Token |
-| 预加载资源 | 使用数字人 SDK 预加载资源文件 |
 | 登录房间 | 使用 Express SDK 登录 RTC 房间 |
-| 启动数字人 | 启动数字人 SDK，开启自定义视频渲染，透传视频帧和 SEI 数据 |
+| 拉流播放 | 使用 Express SDK 拉取数字人音视频流并渲染 |
 
 ---
 
@@ -72,5 +71,4 @@ android/
 
 | 依赖 | 版本 | 说明 |
 |------|------|------|
-| `im.zego:digitalmobile` | 1.4.0.88 | ZEGO 数字人 SDK |
-| `im.zego:express-private` | 3.22.0.46726 | ZEGO Express SDK (RTC) |
+| `im.zego:express-video` | 3.22.0 | ZEGO Express SDK (RTC) |

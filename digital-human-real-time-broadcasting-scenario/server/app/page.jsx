@@ -28,7 +28,6 @@ function ConfigPage() {
   const [broadcastIndex, setBroadcastIndex] = useState(0);
   const [digitalHumanError, setDigitalHumanError] = useState(null);
   const [statusInfo, setStatusInfo] = useState(null);
-  const [outputMode, setOutputMode] = useState(1);  // 1=Web模式, 2=Mobile模式
 
   const allTimbres = useMemo(() => {
     const timbreMap = new Map();
@@ -194,7 +193,6 @@ function ConfigPage() {
           roomId: roomId.trim(),
           streamId: streamId.trim(),
           textPool: textList,
-          outputMode,
         }),
       });
 
@@ -469,46 +467,8 @@ function ConfigPage() {
         </div>
 
         <div className="mt-6">
-          <label className="block text-sm font-medium mb-2">
-            4. 选择输出模式 / Select Output Mode
-          </label>
-          <div className="flex gap-4">
-            <label className={`flex items-center px-4 py-2 border rounded cursor-pointer ${outputMode === 1 ? "border-2 border-blue-500 bg-blue-50" : "border border-gray-200 bg-gray-50"} ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}>
-              <input
-                type="radio"
-                name="output-mode"
-                value="1"
-                checked={outputMode === 1}
-                onChange={() => setOutputMode(1)}
-                disabled={isDisabled}
-                className="mr-2"
-              />
-              <div>
-                <div className="text-sm font-medium">Web 模式 / Web Mode</div>
-                <div className="text-xs text-gray-500">适用于 Web 端 / For Web clients</div>
-              </div>
-            </label>
-            <label className={`flex items-center px-4 py-2 border rounded cursor-pointer ${outputMode === 2 ? "border-2 border-blue-500 bg-blue-50" : "border border-gray-200 bg-gray-50"} ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}>
-              <input
-                type="radio"
-                name="output-mode"
-                value="2"
-                checked={outputMode === 2}
-                onChange={() => setOutputMode(2)}
-                disabled={isDisabled}
-                className="mr-2"
-              />
-              <div>
-                <div className="text-sm font-medium">Mobile 模式 / Mobile Mode</div>
-                <div className="text-xs text-gray-500">适用于 Android/iOS 客户端 / For Android/iOS clients</div>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <div className="mt-6">
           <label htmlFor="text-pool" className="block text-sm font-medium mb-2">
-            5. 配置播报内容列表 / Configure Broadcast Content List
+            4. 配置播报内容列表 / Configure Broadcast Content List
           </label>
           <textarea
             id="text-pool"
@@ -530,7 +490,7 @@ function ConfigPage() {
             disabled={isRunning || starting || !canStart}
             className={`px-5 py-2.5 text-sm font-medium text-white rounded ${isRunning || starting || !canStart ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
           >
-            {starting ? "启动中... / Starting..." : "6. 启动播报任务 / Start Broadcast Task"}
+            {starting ? "启动中... / Starting..." : "5. 启动播报任务 / Start Broadcast Task"}
           </button>
           <button
             onClick={handleStop}

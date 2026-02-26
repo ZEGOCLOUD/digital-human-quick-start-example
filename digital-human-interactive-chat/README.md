@@ -8,9 +8,7 @@
 
 ### 1. 客户端
 - **功能**：模拟音频采集，调用业务后台 AI 交互接口，拉流播放数字人音视频
-- **平台**：
-  - Web：使用 ZEGO Express SDK 拉流播放
-  - Android/iOS：使用 ZEGO Express SDK 拉流 + 数字人 SDK 渲染
+- **平台**：Web / Android / iOS，均使用 ZEGO Express SDK 拉流播放
 - **调用接口**：
   - `POST /api/digital-human/create-task` - 创建数字人任务
   - `GET /api/token` - 获取 RTC Token
@@ -42,10 +40,10 @@ sequenceDiagram
     participant RTC云 as ZEGO<br/>实时音视频云
 
     Note over 客户端,业务后台: 阶段1: 客户端开始通话
-    客户端->>业务后台: 1. POST /api/digital-human/create-task
+    客户端->>业务后台: 1. POST /api/digital-human/create-task<br/>(roomId, streamId)
     业务后台->>数字人API: 2. 创建数字人视频流任务
-    数字人API-->>业务后台: TaskId + 渲染信息
-    业务后台-->>客户端: TaskId + RoomId + StreamId + 渲染信息
+    数字人API-->>业务后台: TaskId
+    业务后台-->>客户端: TaskId
     客户端->>业务后台: 3. GET /api/token?userId=xxx
     业务后台-->>客户端: Token
     客户端->>RTC云: 4. loginRoom(roomId, token)
@@ -78,32 +76,31 @@ sequenceDiagram
 **请求参数**:
 ```json
 {
-  "digitalHumanId": "string",
   "roomId": "string",
-  "streamId": "string",
-  "outputMode": 1  // 1=Web模式, 2=Mobile模式
+  "streamId": "string"
 }
 ```
+
+**参数说明**：
+| 参数 | 说明 |
+|------|------|
+| `roomId` | RTC 房间 ID。**每个用户应使用不同的 roomId**，避免多个用户进入同一房间 |
+| `streamId` | 数字人推流的流 ID。服务端会使用此 streamId 创建数字人推流任务 |
+
+**注意**：`digitalHumanId` 由服务端环境变量配置，客户端无需传递。
 
 **响应示例**:
 ```json
 {
   "success": true,
-  "taskId": "string",
-  "roomId": "string",
-  "streamId": "string",
-  "digitalHumanId": "string",
-  "clientInferencePackageUrl": "string",  // Mobile 模式需要
-  "isSupportSmallImageMode": boolean       // Mobile 模式需要
+  "taskId": "string"
 }
 ```
 
-**输出模式说明**
-
-| 模式 | outputMode | 适用客户端 | 说明 |
-|------|------------|--------|------|
-| Web 模式 | 1 | Web 客户端 | ZEGO Express SDK 直接播放 |
-| Mobile 模式 | 2 | Android/iOS 客户端 | ZEGO Express SDK 拉流 + 数字人 SDK 渲染。性能更好。 |
+**响应字段说明**：
+| 字段 | 说明 |
+|------|------|
+| `taskId` | 数字人任务 ID，用于后续的 AI 交互和停止任务 |
 
 ### POST /api/digital-human/talk-to-ai
 
@@ -169,17 +166,20 @@ Web 客户端使用 ZEGO Express SDK 拉流播放：
 
 ```javascript
 // 步骤1: 创建数字人任务
+// 注意：roomId 应为每个用户生成唯一的值，streamId 为数字人推流的流ID
+const roomId = 'room_' + Date.now();  // 每个用户使用不同的 roomId
+const streamId = 'stream_' + Date.now();  // 数字人推流的流 ID
+
 const createRes = await fetch('/api/digital-human/create-task', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    digitalHumanId: 'dh_001',
-    roomId: 'room_001',
-    streamId: 'stream_001',
-    outputMode: 1  // Web 模式
+    roomId: roomId,
+    streamId: streamId
   })
 });
-const { taskId, roomId, streamId } = await createRes.json();
+const { taskId } = await createRes.json();
+// 服务端只返回 taskId。roomId 和 streamId 使用客户端生成的值
 
 // 步骤2: 获取 Token
 const userId = 'user_001';
@@ -218,23 +218,16 @@ await fetch('/api/digital-human/stop-task', {
 });
 ```
 
-### 2. Android/iOS 客户端接入示例
+### 2. Android 客户端接入示例
 
-移动端需要使用 Express SDK 拉流 + 数字人 SDK 渲染：
+Android 客户端使用 ZEGO Express SDK 拉流播放：
 
 ```java
-// Android 示例
-
-// 步骤1: 创建数字人任务（outputMode=2）
-// 服务端返回：
-// {
-//   "taskId": "task_001",
-//   "roomId": "room_001",
-//   "streamId": "stream_001",
-//   "digitalHumanId": "dh_001",
-//   "clientInferencePackageUrl": "https://...",
-//   "isSupportSmallImageMode": true
-// }
+// 步骤1: 创建数字人任务
+// POST /api/digital-human/create-task
+// 请求 body: { "roomId": "room_xxx", "streamId": "stream_xxx" }
+// 注意：roomId 应为每个用户生成唯一的值，streamId 为数字人推流的流ID
+// 服务端返回：{ "taskId": "task_001" }
 
 // 步骤2: 初始化 Express SDK
 ZegoEngineProfile profile = new ZegoEngineProfile();
@@ -242,50 +235,69 @@ profile.appID = appId;
 profile.scenario = ZegoScenario.HIGH_QUALITY_CHATROOM;
 ZegoExpressEngine.createEngine(profile, null);
 
-// 步骤3: 初始化数字人 SDK
-IZegoDigitalMobile digitalMobile = ZegoDigitalHuman.create(context);
-
-// 步骤4: 生成 base64Config
-String base64Config = generateBase64Config(
-    digitalHumanId,
-    roomId,
-    streamId,
-    clientInferencePackageUrl,
-    isSupportSmallImageMode
-);
-
-// 步骤5: 启动数字人 SDK
-digitalMobile.attach(findViewById(R.id.digital_human_view));
-digitalMobile.start(base64Config, listener);
-
-// 步骤6: 登录房间并拉流
-ZegoExpressEngine.getEngine().loginRoom(roomId, new ZegoUser(userId), token);
-ZegoExpressEngine.getEngine().startPlayingStream(streamId);
-
-// 步骤7: 透传视频帧和 SEI 数据给数字人 SDK
-ZegoExpressEngine.getEngine().setCustomVideoRenderHandler(new IZegoCustomVideoRenderHandler() {
-    @Override
-    public void onRemoteVideoFrameRawData(ByteBuffer[] data, int[] dataLength,
-                                         ZegoVideoFrameParam param, String streamID) {
-        digitalMobile.onRemoteVideoFrameRawData(data, dataLength, convertParam(param), streamID);
+// 步骤3: 登录房间并拉流（使用客户端定义的 roomId 和 streamId）
+ZegoUser user = new ZegoUser(userId, userId);
+ZegoRoomConfig config = new ZegoRoomConfig();
+config.token = token;
+ZegoExpressEngine.getEngine().loginRoom(roomId, user, config, (errorCode, extendedData) -> {
+    if (errorCode == 0) {
+        // 使用 ZegoCanvas 包装 TextureView 进行渲染
+        ZegoCanvas canvas = new ZegoCanvas(findViewById(R.id.remote_video_view));
+        ZegoExpressEngine.getEngine().startPlayingStream(streamId, canvas);
     }
 });
 
-ZegoExpressEngine.getEngine().setEventHandler(new IZegoEventHandler() {
-    @Override
-    public void onPlayerSyncRecvSEI(String streamID, byte[] data) {
-        digitalMobile.onPlayerSyncRecvSEI(streamID, data);
-    }
-});
-
-// 步骤8: 模拟说话（调用业务后台接口）
+// 步骤4: 模拟说话（调用业务后台接口）
 // POST /api/digital-human/talk-to-ai
+// 请求 body: { "taskId": "xxx" }
 
-// 步骤9: 结束通话
-digitalMobile.stop();
+// 步骤5: 结束通话
 ZegoExpressEngine.getEngine().stopPlayingStream(streamId);
 ZegoExpressEngine.getEngine().logoutRoom();
 // POST /api/digital-human/stop-task
+// 请求 body: { "taskId": "xxx" }
+```
+
+### 3. iOS 客户端接入示例
+
+iOS 客户端使用 ZEGO Express SDK 拉流播放：
+
+```objc
+// 步骤1: 创建数字人任务
+// POST /api/digital-human/create-task
+// 请求 body: { "roomId": "room_xxx", "streamId": "stream_xxx" }
+// 注意：roomId 应为每个用户生成唯一的值，streamId 为数字人推流的流ID
+// 服务端返回：{ "taskId": "task_001" }
+
+// 步骤2: 初始化 Express SDK
+ZegoEngineProfile *profile = [[ZegoEngineProfile alloc] init];
+profile.appID = (unsigned int)appId;
+profile.scenario = ZegoScenarioHighQualityChatroom;
+self.expressEngine = [ZegoExpressEngine createEngineWithProfile:profile eventHandler:self];
+
+// 步骤3: 登录房间并拉流（使用客户端生成的 roomId 和 streamId）
+ZegoUser *user = [[ZegoUser alloc] init];
+user.userID = userId;
+user.userName = userId;
+ZegoRoomConfig *roomConfig = [[ZegoRoomConfig alloc] init];
+roomConfig.token = token;
+[self.expressEngine loginRoom:roomId user:user config:roomConfig callback:^(int errorCode, NSDictionary *extendedData) {
+    if (errorCode == 0) {
+        // 使用 ZegoCanvas 包装 UIView 进行渲染
+        ZegoCanvas *canvas = [ZegoCanvas canvasWithView:self.remoteVideoView];
+        [self.expressEngine startPlayingStream:streamId canvas:canvas];
+    }
+}];
+
+// 步骤4: 模拟说话（调用业务后台接口）
+// POST /api/digital-human/talk-to-ai
+// 请求 body: { "taskId": "xxx" }
+
+// 步骤5: 结束通话
+[self.expressEngine stopPlayingStream:streamId];
+[self.expressEngine logoutRoom];
+// POST /api/digital-human/stop-task
+// 请求 body: { "taskId": "xxx" }
 ```
 
 ---
@@ -305,3 +317,5 @@ ZegoExpressEngine.getEngine().logoutRoom();
 - 业务后台使用预置 PCM 文件模拟 AI 交互，实际业务应接入 ASR、LLM、TTS 服务
 - Token 生成需要使用 Token04 算法，确保 `SERVER_SECRET` 安全
 - 客户端销毁时需停止拉流、退出房间、停止数字人任务
+- **每个用户应使用不同的 roomId**，避免多个用户进入同一房间互相干扰
+- 客户端定义的 streamId 是数字人推流的流 ID，客户端使用此 streamId 拉流播放

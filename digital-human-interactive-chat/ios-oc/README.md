@@ -26,7 +26,6 @@ pod install
 |------|------|
 | `APP_ID` | ZEGO 应用 ID。从 ZEGO [控制台](https://console.zego.im/) 获取。 |
 | `API_BASE_URL` | 业务后台地址。模拟器使用 `localhost`，真机使用电脑的局域网 IP。 |
-| `DIGITAL_HUMAN_ID` | 数字人 ID。与服务端协商一致，用于预加载数字人资源。 |
 
 ```objc
 @implementation Config
@@ -37,10 +36,6 @@ pod install
 
 + (NSString *)API_BASE_URL {
     return @"http://localhost:3000";  // 替换为实际地址
-}
-
-+ (NSString *)DIGITAL_HUMAN_ID {
-    return @"your_digital_human_id";  // 替换为你的数字人 ID
 }
 
 @end
@@ -76,18 +71,17 @@ ios-oc/
 ## 三、核心流程
 
 ```
-创建任务 → 获取 Token → 预加载资源 → 登录房间 → 启动数字人 → 模拟说话 → 结束通话
+创建任务 → 获取 Token → 登录房间 → 拉流播放 → 模拟说话 → 结束通话
 ```
 
 | 步骤 | 说明 |
 |------|------|
-| 创建任务 | 调用 `POST /api/digital-human/create-task`，获取 taskId、roomId、streamId 和渲染信息 |
+| 创建任务 | 调用 `POST /api/digital-human/create-task` 获取 taskId |
 | 获取 Token | 调用 `GET /api/token?userId=xxx`，获取 RTC 登录 Token |
-| 预加载资源 | 使用数字人 SDK 预加载资源文件 |
 | 登录房间 | 使用 Express SDK 登录 RTC 房间 |
-| 启动数字人 | 启动数字人 SDK，开启自定义视频渲染，透传视频帧和 SEI 数据 |
+| 拉流播放 | 使用 Express SDK 拉取数字人音视频流并渲染 |
 | 模拟说话 | 调用 `POST /api/digital-human/talk-to-ai`，业务后台通过 WebSocket 驱动数字人 |
-| 结束通话 | 停止数字人 SDK、停止拉流、退出房间、调用 `POST /api/digital-human/stop-task` |
+| 结束通话 | 停止拉流、退出房间、调用 `POST /api/digital-human/stop-task` |
 
 ---
 
@@ -95,5 +89,4 @@ ios-oc/
 
 | 依赖 | 版本 | 说明 |
 |------|------|------|
-| `ZegoExpressPrivate` | 3.22.0.46788 | ZEGO Express SDK (RTC) |
-| `ZegoDigitalMobile` | 1.4.0.88 | ZEGO 数字人 SDK |
+| `ZegoExpressEngine` | 3.22.0 | ZEGO Express SDK (RTC) |

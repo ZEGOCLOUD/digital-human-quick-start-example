@@ -8,9 +8,7 @@
 
 ### 1. 播放端（终端机）
 - **功能**：使用 ZEGO Express SDK 拉取并播放数字人音视频流
-- **平台**：
-  - Web：直接使用 Express SDK 拉流播放
-  - Android/iOS：使用 Express SDK 拉流 + 数字人 SDK 渲染
+- **平台**：Web / Android / iOS，均使用 Express SDK 拉流播放
 - **调用接口**：
   - `GET /api/broadcast` - 获取播报信息（roomId/streamId）
   - `GET /api/token` - 获取 RTC Token
@@ -66,7 +64,7 @@ sequenceDiagram
 
     Note over 播放端,RTC云: 阶段3: 播放端拉流播放
     播放端->>业务后台: 6. GET /api/broadcast
-    业务后台-->>播放端: roomId/streamId/渲染信息
+    业务后台-->>播放端: roomId/streamId
     播放端->>业务后台: 7. GET /api/token?userId=xxx
     业务后台-->>播放端: token
     播放端->>RTC云: 8. loginRoom(roomId, token)
@@ -94,7 +92,7 @@ sequenceDiagram
 |------|------|---------|------|
 | `/api/digital-humans` | GET | - | 获取数字人列表 |
 | `/api/timbres` | GET | `digitalHumanId`（可选） | 获取音色列表 |
-| `/api/broadcast` | POST | `digitalHumanId`, `timbreId`, `roomId`, `streamId`, `textPool`, `outputMode` | 启动播报任务 |
+| `/api/broadcast` | POST | `digitalHumanId`, `timbreId`, `roomId`, `streamId`, `textPool` | 启动播报任务 |
 | `/api/broadcast?index=N` | DELETE | `index`（查询参数） | 停止指定播报任务 |
 
 **POST /api/broadcast 请求示例：**
@@ -109,20 +107,9 @@ sequenceDiagram
   "digitalHumanId": "dh_001",
   "timbreId": "timbre_001",
   "roomId": "room_001",
-  "streamId": "stream_001",
-  "outputMode": 1
+  "streamId": "stream_001"
 }
 ```
-
-
-**输出模式说明**
-
-创建播报任务时需要指定 `outputMode`。请根据播放端平台选择合适的模式：
-
-| 模式 | outputMode | 适用播放端 | 说明 |
-|------|------------|--------|------|
-| Web 模式 | 1 | Web 客户端 | ZEGO Express SDK 直接播放 |
-| Mobile 模式 | 2 | Android/iOS 客户端 | ZEGO Express SDK 拉流 + 数字人 SDK 渲染。性能更好。 |
 
 
 ### 2. 播放端调用接口
@@ -131,7 +118,7 @@ sequenceDiagram
 
 | 端点 | 方法 | 请求参数 | 说明 |
 |------|------|---------|------|
-| `/api/broadcast` | GET | - | 获取播报列表信息（包含 roomId/streamId/渲染信息） |
+| `/api/broadcast` | GET | - | 获取播报列表信息（包含 roomId/streamId） |
 | `/api/token` | GET | `userId`（查询参数） | 获取 ZEGO 客户端 SDK 用的 Token |
 
 **GET /api/broadcast 响应示例：**
@@ -142,10 +129,7 @@ sequenceDiagram
     "0": {
       "taskId": "task_001",
       "roomId": "room_001",
-      "streamId": "stream_001",
-      "digitalHumanId": "dh_001",
-      "clientInferencePackageUrl": "https://...",
-      "isSupportSmallImageMode": true
+      "streamId": "stream_001"
     }
   }
 }
@@ -182,22 +166,14 @@ const remoteView = engine.createRemoteStreamView(remoteStream);
 remoteView.play('remote-video'); // 渲染到 DOM 元素
 ```
 
-### 4. 播放端接入示例（Android/iOS）
+### 4. 播放端接入示例（Android）
 
-移动端需要使用 Express SDK 拉流 + 数字人 SDK 渲染：
+Android 客户端使用 ZEGO Express SDK 拉流播放：
 
 ```java
-// Android 示例
-
-// 步骤1: 获取播报信息（包含渲染信息）
+// 步骤1: 获取播报信息
 // GET /api/broadcast 返回，取第一个播报任务做示例：
-// {
-//   "roomId": "room_001",
-//   "streamId": "stream_001",
-//   "digitalHumanId": "dh_001",
-//   "clientInferencePackageUrl": "https://...",
-//   "isSupportSmallImageMode": true
-// }
+// { "roomId": "room_001", "streamId": "stream_001" }
 
 // 步骤2: 初始化 Express SDK
 ZegoEngineProfile profile = new ZegoEngineProfile();
@@ -205,80 +181,35 @@ profile.appID = appId;
 profile.scenario = ZegoScenario.HIGH_QUALITY_CHATROOM;
 ZegoExpressEngine.createEngine(profile, null);
 
-// 步骤3: 初始化数字人 SDK
-IZegoDigitalMobile digitalMobile = ZegoDigitalHuman.create(context);
-
-// 步骤4: 生成 base64Config（使用服务端返回的渲染信息）
-String base64Config = generateBase64Config(
-    digitalHumanId,
-    clientInferencePackageUrl,
-    isSupportSmallImageMode
-);
-
-// 步骤5: 启动数字人 SDK
-digitalMobile.attach(findViewById(R.id.digital_human_view));
-digitalMobile.start(base64Config, listener);
-
-// 步骤6: 登录房间并拉流
-ZegoExpressEngine.getEngine().loginRoom(roomId, new ZegoUser(userId), token);
-ZegoExpressEngine.getEngine().startPlayingStream(streamId);
-
-// 步骤7: 透传视频帧和 SEI 数据给数字人 SDK
-ZegoExpressEngine.getEngine().setCustomVideoRenderHandler(new IZegoCustomVideoRenderHandler() {
-    @Override
-    public void onRemoteVideoFrameRawData(ByteBuffer[] data, int[] dataLength,
-                                         ZegoVideoFrameParam param, String streamID) {
-        digitalMobile.onRemoteVideoFrameRawData(data, dataLength, convertParam(param), streamID);
-    }
-});
-
-ZegoExpressEngine.getEngine().setEventHandler(new IZegoEventHandler() {
-    @Override
-    public void onPlayerSyncRecvSEI(String streamID, byte[] data) {
-        digitalMobile.onPlayerSyncRecvSEI(streamID, data);
+// 步骤3: 登录房间并拉流
+ZegoUser user = new ZegoUser(userId, userId);
+ZegoRoomConfig config = new ZegoRoomConfig();
+config.token = token;
+ZegoExpressEngine.getEngine().loginRoom(roomId, user, config, (errorCode, extendedData) -> {
+    if (errorCode == 0) {
+        // 使用 ZegoCanvas 包装 TextureView 进行渲染
+        ZegoCanvas canvas = new ZegoCanvas(findViewById(R.id.remote_video_view));
+        ZegoExpressEngine.getEngine().startPlayingStream(streamId, canvas);
     }
 });
 ```
 
+### 5. 播放端接入示例（iOS）
+
+iOS 客户端使用 ZEGO Express SDK 拉流播放：
 
 ```objc
-// iOS 示例 (Objective-C)
-
-// 步骤1: 获取播报信息（包含渲染信息）
+// 步骤1: 获取播报信息
 // GET /api/broadcast 返回，取第一个播报任务做示例：
-// {
-//   "roomId": "room_001",
-//   "streamId": "stream_001",
-//   "digitalHumanId": "dh_001",
-//   "clientInferencePackageUrl": "https://...",
-//   "isSupportSmallImageMode": true
-// }
+// { "roomId": "room_001", "streamId": "stream_001" }
 
 // 步骤2: 初始化 Express SDK
 ZegoEngineProfile *profile = [[ZegoEngineProfile alloc] init];
-profile.appID = appId;
+profile.appID = (unsigned int)appId;
 profile.scenario = ZegoScenarioHighQualityChatroom;
 self.expressEngine = [ZegoExpressEngine createEngineWithProfile:profile eventHandler:self];
 
-// 步骤3: 初始化数字人 SDK
-self.digitalMobile = [ZegoDigitalHuman create];
-
-// 创建数字人视图并绑定
-ZegoDigitalView *digitalHumanView = [[ZegoDigitalView alloc] initWithFrame:view.bounds];
-[self.view addSubview:digitalHumanView];
-[self.digitalMobile attach:digitalHumanView];
-
-// 步骤4: 生成 base64Config（使用服务端返回的渲染信息）
-NSString *base64Config = [self generateBase64Config:digitalHumanId
-                                             roomId:roomId
-                                          streamId:streamId
-                                        packageUrl:clientInferencePackageUrl
-                         isSupportSmallImageMode:isSupportSmallImageMode];
-
-// 步骤5: 启动数字人 SDK
-[self.digitalMobile start:base64Config delegate:self];
-
-// 步骤6: 登录房间并拉流
+// 步骤3: 登录房间并拉流
 ZegoUser *user = [[ZegoUser alloc] init];
 user.userID = userId;
 user.userName = userId;
@@ -286,39 +217,13 @@ ZegoRoomConfig *roomConfig = [[ZegoRoomConfig alloc] init];
 roomConfig.token = token;
 [self.expressEngine loginRoom:roomId user:user config:roomConfig callback:^(int errorCode, NSDictionary *extendedData) {
     if (errorCode == 0) {
-        // 开启自定义渲染
-        ZegoCustomVideoRenderConfig *renderConfig = [[ZegoCustomVideoRenderConfig alloc] init];
-        renderConfig.bufferType = ZegoVideoBufferTypeRawData;
-        renderConfig.frameFormatSeries = ZegoVideoFrameFormatSeriesRGB;
-        [self.expressEngine enableCustomVideoRender:YES config:renderConfig];
-        [self.expressEngine setCustomVideoRenderHandler:self];
-
-        // 开始拉流
-        [self.expressEngine startPlayingStream:streamId];
+        // 使用 ZegoCanvas 包装 UIView 进行渲染
+        ZegoCanvas *canvas = [ZegoCanvas canvasWithView:self.remoteVideoView];
+        [self.expressEngine startPlayingStream:streamId canvas:canvas];
     }
 }];
-
-// 步骤7: 透传视频帧和 SEI 数据给数字人 SDK
-// ZegoCustomVideoRenderHandler 实现
-- (void)onRemoteVideoFrameRawData:(unsigned char **)data
-                       dataLength:(unsigned int *)dataLength
-                            param:(ZegoVideoFrameParam *)param
-                         streamID:(NSString *)streamID {
-    ZDMVideoFrameParam *dmParam = [[ZDMVideoFrameParam alloc] init];
-    dmParam.format = (ZDMVideoFrameFormat)param.format;
-    dmParam.width = param.size.width;
-    dmParam.height = param.size.height;
-    [self.digitalMobile onRemoteVideoFrameRawData:data
-                                        dataLength:dataLength
-                                             param:dmParam
-                                          streamID:streamID];
-}
-
-// ZegoEventHandler 实现
-- (void)onPlayerSyncRecvSEI:(NSData *)data streamID:(NSString *)streamID {
-    [self.digitalMobile onPlayerSyncRecvSEI:streamID data:data];
-}
 ```
+
 ---
 
 ## 四、各端示例代码详细说明

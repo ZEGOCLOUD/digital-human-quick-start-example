@@ -20,7 +20,7 @@ cp .env.example .env
 | `APP_ID` | ZEGO 应用 ID。从 ZEGO [控制台](https://console.zego.im/) 获取。 |
 | `SERVER_SECRET` | 服务端密钥（32位，用于生成 Token，服务端 API 签名验证）。从 ZEGO [控制台](https://console.zego.im/) 获取。 |
 | `TOKEN_EXPIRE_SECONDS` | ZEGO 客户端 SDK 用的 Token 有效期（秒，默认 3600） |
-| `DIGITAL_HUMAN_ID` | 数字人 ID。从 ZEGO [控制台](https://console.zego.im/) 获取。 |
+| `DIGITAL_HUMAN_ID` | 数字人 ID。调用数字人服务端 `GetDigitalHumanList` 接口获取。 |
 
 ### 3. 准备音频文件（可选）
 
@@ -69,23 +69,24 @@ server/
 **请求参数**:
 ```json
 {
-  "digitalHumanId": "string",
   "roomId": "string",
-  "streamId": "string",
-  "outputMode": 1  // 1=Web模式, 2=Mobile模式
+  "streamId": "string"
 }
 ```
+
+**参数说明**：
+| 参数 | 说明 |
+|------|------|
+| `roomId` | RTC 房间 ID。数字人将加入此房间推流，**每个用户应使用不同的 roomId**，避免多个用户进入同一房间 |
+| `streamId` | 数字人推流的流 ID。服务端会使用此 streamId 创建数字人推流任务 |
+
+**注意**：`digitalHumanId` 本示例由服务端环境变量配置，客户端无需传递。
 
 **响应示例**:
 ```json
 {
   "success": true,
-  "taskId": "string",
-  "roomId": "string",
-  "streamId": "string",
-  "digitalHumanId": "string",
-  "clientInferencePackageUrl": "string",  // Mobile 模式需要
-  "isSupportSmallImageMode": boolean       // Mobile 模式需要
+  "taskId": "string"
 }
 ```
 

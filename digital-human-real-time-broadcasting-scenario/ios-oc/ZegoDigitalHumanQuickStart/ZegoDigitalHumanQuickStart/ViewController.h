@@ -9,18 +9,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class ZegoDigitalView;
-@protocol IZegoDigitalMobile;
-
 @interface ViewController : UIViewController
 
 // UI组件
 @property (nonatomic, strong) UILabel *tvStatus;
 @property (nonatomic, strong) UILabel *tvRoomInfo;
-@property (nonatomic, strong) UIView *digitalHumanContainerView;
-
-// 数字人SDK实例
-@property (nonatomic, strong, nullable) id<IZegoDigitalMobile> digitalMobile;
+@property (nonatomic, strong) UIView *remoteVideoView;
 
 @end
 

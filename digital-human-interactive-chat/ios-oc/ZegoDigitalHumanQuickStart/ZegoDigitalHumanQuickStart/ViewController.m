@@ -9,7 +9,6 @@
 #import "ViewController.h"
 #import "Config.h"
 #import <ZegoExpressEngine/ZegoExpressEngine.h>
-#import <ZegoDigitalMobile/ZegoDigitalMobile.h>
 
 // ========== 常量定义 / Constant Definitions ==========
 // ID前缀（用于生成动态ID）/ ID prefixes (for generating dynamic IDs)
@@ -19,19 +18,7 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 
 // ========== 1. 内部接口扩展 ==========
 // ========== 1. Internal interface extensions ==========
-@interface ViewController () <ZegoDigitalMobileDelegate, ZegoDigitalHumanResourceDelegate, ZegoEventHandler, ZegoCustomVideoRenderHandler>
-
-// 数字人视图（SDK提供的渲染视图）
-// Digital human view (rendering view provided by SDK)
-@property (nonatomic, strong) ZegoDigitalView *digitalHumanView;
-
-// 播报信息（从API获取）/ Broadcast information (from API)
-@property (nonatomic, copy) NSString *digitalHumanId;
-@property (nonatomic, copy) NSString *clientInferencePackageUrl;
-@property (nonatomic, assign) BOOL isSupportSmallImageMode;
-
-// 用于在预加载成功后启动数字人 / Used to start digital human after successful preload
-@property (nonatomic, copy) NSString *pendingBase64Config;
+@interface ViewController () <ZegoEventHandler>
 
 @end
 
@@ -57,8 +44,8 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
         return;
     }
 
-    // 初始化SDK / Initialize SDKs
-    [self initSDKs];
+    // 初始化SDK / Initialize SDK
+    [self initSDK];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -68,17 +55,6 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
     // Stop call if in progress when page disappears
     if (self.isCallStarted) {
         [self stopCall];
-    }
-}
-
-- (void)viewDidLayoutSubviews {
-    [super viewDidLayoutSubviews];
-
-    // 更新数字人视图尺寸以匹配容器
-    // Update digital human view frame to match container
-    if (self.digitalHumanView && self.digitalHumanContainerView) {
-        self.digitalHumanView.frame = self.digitalHumanContainerView.bounds;
-        NSLog(@"[Layout] Updated digital human view frame: %@", NSStringFromCGRect(self.digitalHumanView.frame));
     }
 }
 
@@ -117,10 +93,10 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
     noteLabel.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:noteLabel];
 
-    // 数字人视图容器 / Digital human view container
-    self.digitalHumanContainerView = [[UIView alloc] init];
-    self.digitalHumanContainerView.backgroundColor = [UIColor clearColor];
-    [self.view addSubview:self.digitalHumanContainerView];
+    // 远端视频视图 / Remote video view
+    self.remoteVideoView = [[UIView alloc] init];
+    self.remoteVideoView.backgroundColor = [UIColor blackColor];
+    [self.view addSubview:self.remoteVideoView];
 
     // Start Call 按钮 / Start Call button
     self.btnStartCall = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -156,7 +132,7 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     self.tvStatus.translatesAutoresizingMaskIntoConstraints = NO;
     noteLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.digitalHumanContainerView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.remoteVideoView.translatesAutoresizingMaskIntoConstraints = NO;
     self.btnStartCall.translatesAutoresizingMaskIntoConstraints = NO;
     self.btnStopCall.translatesAutoresizingMaskIntoConstraints = NO;
     self.btnSimulateTalkZh.translatesAutoresizingMaskIntoConstraints = NO;
@@ -178,19 +154,19 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
         [noteLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
         [noteLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
 
-        // Digital human container constraints - maximize height
-        [self.digitalHumanContainerView.topAnchor constraintEqualToAnchor:noteLabel.bottomAnchor constant:4],
-        [self.digitalHumanContainerView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.digitalHumanContainerView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.digitalHumanContainerView.heightAnchor constraintEqualToConstant:500],
+        // Remote video view constraints - maximize height
+        [self.remoteVideoView.topAnchor constraintEqualToAnchor:noteLabel.bottomAnchor constant:4],
+        [self.remoteVideoView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.remoteVideoView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.remoteVideoView.heightAnchor constraintEqualToConstant:500],
 
         // Start/Stop Call buttons - compact
-        [self.btnStartCall.topAnchor constraintEqualToAnchor:self.digitalHumanContainerView.bottomAnchor constant:4],
+        [self.btnStartCall.topAnchor constraintEqualToAnchor:self.remoteVideoView.bottomAnchor constant:4],
         [self.btnStartCall.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
         [self.btnStartCall.trailingAnchor constraintEqualToAnchor:self.view.centerXAnchor constant:-4],
         [self.btnStartCall.heightAnchor constraintEqualToConstant:36],
 
-        [self.btnStopCall.topAnchor constraintEqualToAnchor:self.digitalHumanContainerView.bottomAnchor constant:4],
+        [self.btnStopCall.topAnchor constraintEqualToAnchor:self.remoteVideoView.bottomAnchor constant:4],
         [self.btnStopCall.leadingAnchor constraintEqualToAnchor:self.view.centerXAnchor constant:4],
         [self.btnStopCall.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
         [self.btnStopCall.heightAnchor constraintEqualToConstant:36],
@@ -212,42 +188,18 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 #pragma mark - 4. SDK Initialization
 
 /**
- * 初始化 Express SDK 和数字人 SDK
- * Initialize Express SDK and Digital Human SDK
+ * 初始化 Express SDK
+ * Initialize Express SDK
  */
-- (void)initSDKs {
-    // 初始化 Express SDK / Initialize Express SDK
+- (void)initSDK {
     ZegoEngineProfile *profile = [[ZegoEngineProfile alloc] init];
     profile.appID = (unsigned int)[Config APP_ID];
     profile.scenario = ZegoScenarioHighQualityChatroom;
 
     self.expressEngine = [ZegoExpressEngine createEngineWithProfile:profile eventHandler:self];
 
-    // 初始化数字人SDK / Initialize Digital Human SDK
-    self.digitalMobile = [ZegoDigitalHuman create];
-
-    // 创建数字人视图并绑定 / Create and bind digital human view
-    self.digitalHumanView = [[ZegoDigitalView alloc] initWithFrame:self.digitalHumanContainerView.bounds];
-    self.digitalHumanView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [self.digitalHumanContainerView addSubview:self.digitalHumanView];
-
-    [self.digitalMobile attach:self.digitalHumanView];
-
-    // 预加载数字人资源 / Preload digital human resources
-    [self updateStatus:@"Preloading digital human resources..."];
-    NSString *userId = [self generateDynamicId:kUserIdPrefix];
-    NSString *token = [self fetchToken:userId];
-    if (token) {
-        ZegoDigitalHumanAuth *auth = [[ZegoDigitalHumanAuth alloc] initWithAppID:(unsigned int)[Config APP_ID]
-                                                                            userID:userId
-                                                                             token:token];
-        [[ZegoDigitalHumanResource sharedInstance] preloadWithAuth:auth
-                                                   digitalHumanId:[Config DIGITAL_HUMAN_ID]
-                                                         delegate:self];
-        NSLog(@"[DigitalHuman] Starting resource preload: %@", [Config DIGITAL_HUMAN_ID]);
-    }
-
-    [self updateStatus:@"waiting for initialization..."];
+    [self updateStatus:@"Ready"];
+    NSLog(@"[SDK] Express engine initialized");
 }
 
 #pragma mark - 5. Main Flow
@@ -268,19 +220,16 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 
             // 2. 调用服务端创建数字人任务 / Call server to create digital human task
             [self updateStatus:@"Creating digital human task..."];
-            NSDictionary *taskInfo = [self createDigitalHumanTask:roomId streamId:streamId];
-            if (!taskInfo) {
+            NSString *taskId = [self createDigitalHumanTask:roomId streamId:streamId];
+            if (!taskId) {
                 [self updateStatus:@"Failed to create task"];
                 return;
             }
 
             // 保存任务信息 / Save task information
-            self.currentTaskId = taskInfo[@"taskId"];
-            self.currentRoomId = taskInfo[@"roomId"];
-            self.currentStreamId = taskInfo[@"streamId"];
-            self.digitalHumanId = [Config DIGITAL_HUMAN_ID]; // 与服务端协商一致
-            self.clientInferencePackageUrl = taskInfo[@"clientInferencePackageUrl"];
-            self.isSupportSmallImageMode = [taskInfo[@"isSupportSmallImageMode"] boolValue];
+            self.currentTaskId = taskId;
+            self.currentRoomId = roomId;  // 使用客户端生成的 roomId
+            self.currentStreamId = streamId;  // 使用客户端生成的 streamId
 
             NSLog(@"[Task] Task created - TaskId: %@", self.currentTaskId);
 
@@ -292,7 +241,7 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
                 return;
             }
 
-            // 4. 登录房间（登录成功后会启动数字人SDK）/ Login room (digital human SDK will start after successful login)
+            // 4. 登录房间 / Login room
             [self updateStatus:@"Logging in to room..."];
             [self loginRoom:self.currentRoomId streamId:self.currentStreamId userId:self.currentUserId token:token];
 
@@ -307,11 +256,19 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 // #pragma mark - 6. API Calls (Inline - aligned with Android's OkHttp calls)
 
 /**
- * 创建数字人任务 - 对齐Android的createDigitalHumanTask()
+ * 创建数字人任务 - 对齐 Android 的 createDigitalHumanTask()
  * Create digital human task - aligned with Android's createDigitalHumanTask()
  * POST /api/digital-human/create-task
+ *
+ * 请求参数说明 / Request parameters:
+ * - roomId: 数字人加入的 RTC 房间 ID，每个用户应使用不同的房间 ID
+ *   Digital human's RTC room ID, each user should use a different room ID
+ * - streamId: 数字人推流的流 ID
+ *   Digital human's stream ID for pushing stream
+ *
+ * @return 任务 ID / Task ID
  */
-- (NSDictionary *)createDigitalHumanTask:(NSString *)roomId streamId:(NSString *)streamId {
+- (NSString *)createDigitalHumanTask:(NSString *)roomId streamId:(NSString *)streamId {
     NSString *urlString = [NSString stringWithFormat:@"%@/api/digital-human/create-task", [Config API_BASE_URL]];
     NSURL *url = [NSURL URLWithString:urlString];
 
@@ -323,8 +280,7 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
     // Build request body (digitalHumanId is configured in server env)
     NSDictionary *bodyDict = @{
         @"roomId": roomId,
-        @"streamId": streamId,
-        @"outputMode": @2  // Mobile 模式 / Mobile mode
+        @"streamId": streamId
     };
 
     NSError *jsonError = nil;
@@ -357,24 +313,15 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
     // 验证必需字段
     // Validate required fields
     NSString *taskId = json[@"taskId"];
-    NSString *respRoomId = json[@"roomId"];
-    NSString *respStreamId = json[@"streamId"];
-    NSString *digitalHumanId = json[@"digitalHumanId"];
-    NSString *packageUrl = json[@"clientInferencePackageUrl"];
+    // roomId 由客户端生成，直接使用传入参数 // roomId is generated by client, use passed parameter
+    // streamId 由客户端生成，直接使用传入参数 // streamId is generated by client, use passed parameter
 
-    if (!taskId || !respRoomId || !respStreamId || !digitalHumanId || !packageUrl) {
+    if (!taskId) {
         NSLog(@"[API] Incomplete task information");
         return nil;
     }
 
-    return @{
-        @"taskId": taskId,
-        @"roomId": respRoomId,
-        @"streamId": respStreamId,
-        @"digitalHumanId": digitalHumanId,
-        @"clientInferencePackageUrl": packageUrl,
-        @"isSupportSmallImageMode": json[@"isSupportSmallImageMode"] ?: @NO
-    };
+    return taskId;
 }
 
 /**
@@ -460,15 +407,6 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
             userId:(NSString *)userId
              token:(NSString *)token {
 
-    ZegoEngineConfig *engineConfig = [[ZegoEngineConfig alloc] init];
-    engineConfig.advancedConfig = @{
-        @"set_audio_volume_ducking_mode": @"1",
-        @"enable_rnd_volume_adaptive": @"true",
-        @"sideinfo_callback_version": @"3",
-        @"sideinfo_bound_to_video_decoder": @"true"
-    };
-    [ZegoExpressEngine setEngineConfig:engineConfig];
-
     [self.expressEngine setRoomScenario:ZegoScenarioHighQualityChatroom];
 
     ZegoRoomConfig *roomConfig = [[ZegoRoomConfig alloc] init];
@@ -491,22 +429,7 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 
             // 更新UI状态 / Update UI state
             [strongSelf updateUI];
-
-            // 登录成功后：开启自定义渲染 / After successful login: enable custom video rendering
-            [strongSelf enableCustomVideoRender];
-
-            // 生成配置 / Generate configuration
-            NSString *base64Config = [strongSelf generateBase64Config:strongSelf.digitalHumanId
-                                                                 roomId:strongSelf.currentRoomId
-                                                              streamId:strongSelf.currentStreamId
-                                                            packageUrl:strongSelf.clientInferencePackageUrl
-                                                 isSupportSmallImageMode:strongSelf.isSupportSmallImageMode];
-
-            // 打印base64config用于调试 / Print base64config for debugging
-            NSLog(@"[Config] Base64Config: %@", base64Config);
-
-            // 启动数字人SDK / Start digital human SDK
-            [strongSelf startDigitalHumanSDK:base64Config];
+            [strongSelf updateStatus:@"In call, waiting for stream..."];
         } else {
             NSLog(@"[RTC] Room login failed: %d", errorCode);
             [strongSelf updateStatus:[NSString stringWithFormat:@"Room login failed: %d", errorCode]];
@@ -515,81 +438,20 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 }
 
 /**
- * 开启自定义视频渲染 - 对齐Android的enableCustomVideoRender()
- * Enable custom video rendering - aligned with Android's enableCustomVideoRender()
- */
-- (void)enableCustomVideoRender {
-    ZegoCustomVideoRenderConfig *renderConfig = [[ZegoCustomVideoRenderConfig alloc] init];
-    renderConfig.bufferType = ZegoVideoBufferTypeRawData;
-    renderConfig.frameFormatSeries = ZegoVideoFrameFormatSeriesRGB;
-    renderConfig.enableEngineRender = NO;
-    [self.expressEngine enableCustomVideoRender:YES config:renderConfig];
-
-    // 设置视频帧回调
-    // Set video frame callback
-    [self.expressEngine setCustomVideoRenderHandler:self];
-
-    NSLog(@"[RTC] Custom video rendering enabled");
-}
-
-/**
  * 开始拉流 - 对齐Android的startPlayingStream()
  * Start playing stream - aligned with Android's startPlayingStream()
  */
 - (void)startPlayingStream:(NSString *)streamID {
-    // 设置拉流缓冲区
-    // Set stream buffer interval range
-    [self.expressEngine setPlayStreamBufferIntervalRange:streamID min:100 max:2000];
-
-    // 开始拉流 / Start playing stream
-    [self.expressEngine startPlayingStream:streamID];
+    // 使用 ZegoCanvas 包装 UIView 进行渲染
+    // Use ZegoCanvas to wrap UIView for rendering
+    ZegoCanvas *canvas = [ZegoCanvas canvasWithView:self.remoteVideoView];
+    [self.expressEngine startPlayingStream:streamID canvas:canvas];
 
     [self updateStatus:@"Playing..."];
     NSLog(@"[RTC] Started playing stream: %@", streamID);
 }
 
-#pragma mark - 8. Digital Human
-
-/**
- * 启动数字人SDK - 对齐Android的startDigitalHumanSDK()
- * Start digital human SDK - aligned with Android's startDigitalHumanSDK()
- */
-- (void)startDigitalHumanSDK:(NSString *)base64Config {
-    if (!self.digitalMobile) {
-        [self updateStatus:@"SDK not initialized"];
-        return;
-    }
-
-    @try {
-        NSLog(@"[DigitalHuman] Starting digital human SDK with config...");
-        NSLog(@"[DigitalHuman] DigitalHumanID: %@", self.digitalHumanId);
-        NSLog(@"[DigitalHuman] RoomID: %@", self.currentRoomId);
-        NSLog(@"[DigitalHuman] StreamID: %@", self.currentStreamId);
-
-        [self.digitalMobile start:base64Config delegate:self];
-
-        NSLog(@"[DigitalHuman] SDK start method called successfully");
-        [self updateStatus:@"Digital human SDK started"];
-    } @catch (NSException *exception) {
-        NSLog(@"[DigitalHuman] Startup failed: %@", exception.reason);
-        NSLog(@"[DigitalHuman] Exception stack: %@", exception.callStackSymbols);
-        [self updateStatus:[NSString stringWithFormat:@"Failed to start: %@", exception.reason]];
-    }
-}
-
-/**
- * 停止数字人
- * Stop digital human
- */
-- (void)stopDigitalHuman {
-    if (self.digitalMobile) {
-        [self.digitalMobile stop];
-        self.digitalMobile = nil;
-    }
-    NSLog(@"[DigitalHuman] Digital human stopped");
-}
-
-#pragma mark - 9. Helper Methods
+#pragma mark - 8. Helper Methods
 
 
 - (NSString *)generateDynamicId:(NSString *)prefix {
@@ -601,47 +463,6 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 }
 
 /**
- * 生成 Base64Config - 对齐Android的generateBase64Config()
- * Generate Base64Config - aligned with Android's generateBase64Config()
- */
-- (NSString *)generateBase64Config:(NSString *)digitalHumanId
-                           roomId:(NSString *)roomId
-                        streamId:(NSString *)streamId
-                      packageUrl:(NSString *)packageUrl
-       isSupportSmallImageMode:(BOOL)isSupportSmallImageMode {
-
-    // 构建Streams配置
-    // Build Streams configuration
-    NSDictionary *stream = @{
-        @"RoomId": roomId ?: @"",
-        @"StreamId": streamId ?: @"",
-        @"EncodeCode": @"H264",
-        @"PackageUrl": packageUrl ?: @"",
-        @"ConfigId": @"mobile",
-        @"IsSupportSmallImageMode": isSupportSmallImageMode ? @YES : @NO
-    };
-
-    NSDictionary *config = @{
-        @"DigitalHumanId": digitalHumanId ?: @"",
-        @"Streams": @[stream]
-    };
-
-    NSError *jsonError = nil;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:config options:0 error:&jsonError];
-    if (jsonError) {
-        NSLog(@"[Config] JSON serialization failed: %@", jsonError);
-        return @"";
-    }
-
-    // 打印原始配置JSON用于调试 / Print raw config JSON for debugging
-    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    NSLog(@"[Config] Raw config JSON: %@", jsonString);
-
-    NSString *base64String = [jsonData base64EncodedStringWithOptions:0];
-    return base64String;
-}
-
-/**
  * 结束通话
  * Stop call
  */
@@ -650,21 +471,18 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
         @try {
             [self updateStatus:@"Stopping call..."];
 
-            // 1. 停止数字人SDK / Stop digital human SDK
-            [self.digitalMobile stop];
-
-            // 2. 停止拉流 / Stop playing stream
+            // 1. 停止拉流 / Stop playing stream
             if (self.currentStreamId) {
                 [self.expressEngine stopPlayingStream:self.currentStreamId];
             }
 
-            // 3. 退出房间 / Logout room
+            // 2. 退出房间 / Logout room
             if (self.isRoomLoggedIn && self.currentRoomId) {
                 [self.expressEngine logoutRoom:self.currentRoomId];
                 self.isRoomLoggedIn = NO;
             }
 
-            // 4. 调用服务端停止任务 / Call server to stop task
+            // 3. 调用服务端停止任务 / Call server to stop task
             if (self.currentTaskId) {
                 [self stopDigitalHumanTask:self.currentTaskId];
             }
@@ -675,7 +493,7 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
             self.currentStreamId = nil;
 
             [self updateUI];
-            [self updateStatus:@"waiting for initialization..."];
+            [self updateStatus:@"Ready"];
 
         } @catch (NSException *exception) {
             NSLog(@"[Error] Stop call failed: %@", exception.reason);
@@ -796,9 +614,6 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
  * Cleanup resources
  */
 - (void)cleanup {
-    // 停止数字人 / Stop digital human
-    [self stopDigitalHuman];
-
     // 停止拉流 / Stop playing stream
     if (self.currentStreamId) {
         [self.expressEngine stopPlayingStream:self.currentStreamId];
@@ -821,49 +636,7 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
     self.btnSimulateTalkEn.enabled = NO;
 }
 
-#pragma mark - 10. Delegates
-
-// ========== ZegoDigitalMobileDelegate ==========
-
-- (void)onDigitalMobileStartSuccess {
-    [self updateStatus:@"Digital human started successfully"];
-    NSLog(@"[DigitalHuman] SDK started successfully, waiting for first frame...");
-}
-
-- (void)onError:(int)errorCode errorMsg:(NSString *)errorMsg {
-    NSLog(@"[DigitalHuman] Error: %d, %@", errorCode, errorMsg);
-    [self updateStatus:[NSString stringWithFormat:@"Error: %@", errorMsg ?: @"Unknown"]];
-}
-
-- (void)onSurfaceFirstFrameDraw {
-    [self updateStatus:@"In call"];
-    NSLog(@"[DigitalHuman] First frame rendered, task is now ready");
-
-    // 第一帧渲染后才启用按钮 / Enable buttons only after first frame is rendered
-    dispatch_async(dispatch_get_main_queue(), ^{
-        self.btnSimulateTalkZh.enabled = YES;
-        self.btnSimulateTalkEn.enabled = YES;
-        NSLog(@"[DigitalHuman] Talk buttons enabled");
-    });
-}
-
-// ========== ZegoDigitalHumanResourceDelegate ==========
-
-- (void)onPreloadSuccess:(NSString *)digitalHumanId {
-    NSLog(@"[DigitalHuman] Preload success: %@", digitalHumanId);
-}
-
-- (void)onPreloadFailed:(NSString *)digitalHumanId
-              errorCode:(NSInteger)errorCode
-           errorMessage:(NSString *)errorMessage {
-    NSLog(@"[DigitalHuman] Preload failed: %@ - code: %ld, msg: %@", digitalHumanId, (long)errorCode, errorMessage);
-}
-
-- (void)onPreloadProgress:(NSString *)digitalHumanId
-                 progress:(float)progress {
-    // 预加载进度（可选显示）
-    // Preload progress (optional display)
-}
+#pragma mark - 9. Delegates
 
 // ========== ZegoEventHandler ==========
 
@@ -880,67 +653,6 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
             }
         }
     }
-}
-
-- (void)onPlayerSyncRecvSEI:(NSData *)data streamID:(NSString *)streamID {
-    if ([streamID isEqualToString:self.currentStreamId] && self.digitalMobile) {
-        // 重要：将 SEI 信息设置到数字人 SDK
-        // IMPORTANT: Set SEI data to digital human SDK
-        [self.digitalMobile onPlayerSyncRecvSEI:streamID data:data];
-    }
-}
-
-// ========== ZegoCustomVideoRenderHandler ==========
-
-- (void)onRemoteVideoFrameRawData:(unsigned char **)data
-                       dataLength:(unsigned int *)dataLength
-                            param:(ZegoVideoFrameParam *)param
-                         streamID:(NSString *)streamID {
-
-    if (!data || !dataLength || !param || !streamID || ![streamID isEqualToString:self.currentStreamId]) {
-        return;
-    }
-
-    if (!self.digitalMobile) {
-        return;
-    }
-
-    // 创建ZDMVideoFrameParam
-    // Create ZDMVideoFrameParam
-    ZDMVideoFrameParam *dmParam = [[ZDMVideoFrameParam alloc] init];
-
-    // 转换format / Convert format (对齐Android / aligned with Android)
-    switch (param.format) {
-        case ZegoVideoFrameFormatI420:
-            dmParam.format = ZDMVideoFrameFormatI420;
-            break;
-        case ZegoVideoFrameFormatNV12:
-            dmParam.format = ZDMVideoFrameFormatNV12;
-            break;
-        case ZegoVideoFrameFormatNV21:
-            dmParam.format = ZDMVideoFrameFormatNV21;
-            break;
-        default:
-            dmParam.format = ZDMVideoFrameFormatUnknown;
-            break;
-    }
-
-    dmParam.width = param.size.width;
-    dmParam.height = param.size.height;
-    dmParam.rotation = param.rotation;
-
-    // 设置步长
-    // Set strides
-    for (int i = 0; i < 4; i++) {
-        [dmParam setStride:param.strides[i] atIndex:i];
-    }
-
-    // 重要：将视频帧数据设置到数字人 SDK
-    // IMPORTANT: Set video frame data to digital human SDK
-    [self.digitalMobile onRemoteVideoFrameRawData:data
-                                            dataLength:dataLength
-                                                 param:dmParam
-                                              streamID:streamID];
 }
 
 @end

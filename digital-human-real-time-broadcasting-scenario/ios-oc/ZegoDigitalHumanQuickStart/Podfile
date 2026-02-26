@@ -6,16 +6,13 @@ target 'ZegoDigitalHumanQuickStart' do
   use_frameworks!
 
   # Pods for ZegoDigitalHumanQuickStart
-  
+
   # ZEGO Express SDK (RTC功能)
-  pod 'ZegoExpressPrivate', '3.22.0.46788'
-  
-  # ZEGO Digital Mobile SDK (数字人渲染)
-  pod 'ZegoDigitalMobile', '1.4.0.88'
-  
+  pod 'ZegoExpressEngine', '3.22.0'
+
   # Masonry (布局库)
   pod 'Masonry', '~> 1.1.0'
-  
+
   # SDWebImage (图片加载库)
   pod 'SDWebImage', '~> 5.0'
 

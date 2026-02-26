@@ -33,9 +33,6 @@ export const GET = async () => {
       taskId: info.taskId,
       roomId: info.roomId,
       streamId: info.streamId,
-      digitalHumanId: info.digitalHumanId,
-      clientInferencePackageUrl: info.clientInferencePackageUrl,
-      isSupportSmallImageMode: info.isSupportSmallImageMode,
       // timer 不可序列化，不返回
       // timer is not serializable, exclude from response
     };

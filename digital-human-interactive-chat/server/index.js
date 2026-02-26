@@ -2,7 +2,6 @@ import http from "http";
 import url from "url";
 import {
   createStreamTask,
-  getDigitalHumanRenderInfo,
   stopStreamTask,
 } from "./lib/digitalHuman.js";
 import { generateToken } from "./lib/token.js";
@@ -68,13 +67,13 @@ const parseBody = (req) =>
 const handleCreateTask = async (req, res) => {
   try {
     const body = await parseBody(req);
-    const { digitalHumanId: clientDigitalHumanId, roomId, streamId, outputMode } = body;
+    const { roomId, streamId } = body;
 
-    // 优先使用客户端传递的 digitalHumanId，否则使用服务端环境变量
-    // Use client-provided digitalHumanId first, otherwise use server env variable
-    const digitalHumanId = clientDigitalHumanId || process.env.DIGITAL_HUMAN_ID;
+    // digitalHumanId 由服务端环境变量配置
+    // digitalHumanId is configured in server environment variable
+    const digitalHumanId = process.env.DIGITAL_HUMAN_ID;
 
-    console.log("[POST /api/digital-human/create-task] Creating digital human task:", {digitalHumanId, roomId, streamId, outputMode, });
+    console.log("[POST /api/digital-human/create-task] Creating digital human task:", { roomId, streamId, digitalHumanId });
 
     // 调用 ZEGO 数字人 API 创建任务
     // Call ZEGO Digital Human API to create task
@@ -82,26 +81,13 @@ const handleCreateTask = async (req, res) => {
       digitalHumanId,
       roomId,
       streamId,
-      outputMode: outputMode ?? 2, // 默认 Mobile 模式 / Default to Mobile mode
     });
 
-    // 获取渲染信息（Android/iOS 端需要）
-    // Get render info (required by Android/iOS)
-    const renderInfo = await getDigitalHumanRenderInfo({ digitalHumanId });
-
-    console.log("[POST /api/digital-human/create-task] Task created successfully:", {
-      taskId,
-      renderInfo,
-    });
+    console.log("[POST /api/digital-human/create-task] Task created successfully:", { taskId });
 
     sendJSON(res, {
       success: true,
       taskId,
-      roomId,
-      streamId,
-      digitalHumanId,
-      clientInferencePackageUrl: renderInfo.clientInferencePackageUrl,
-      isSupportSmallImageMode: renderInfo.isSupportSmallImageMode,
     });
   } catch (error) {
     console.error("[POST /api/digital-human/create-task] Error:", error);

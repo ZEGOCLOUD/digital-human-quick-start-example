@@ -49,7 +49,6 @@ export const createStreamTask = async (params) => {
     {
       DigitalHumanConfig: { DigitalHumanId: params.digitalHumanId },
       RTCConfig: { RoomId: params.roomId, StreamId: params.streamId },
-      ExtraConfig: { OutputMode: params.outputMode ?? 1 },
     }
   );
   return data.TaskId;
@@ -119,21 +118,6 @@ export const getDigitalHumanList = async (params) => {
 
   const data = await post("GetDigitalHumanList", body);
   return data;
-};
-
-// TODO：新版本 SDK 不需要此函数，临时保留
-// TODO: New version SDK doesn't need this, temporarily reserved
-// 获取数字人渲染信息（Android/iOS 需要使用素材包下载地址）
-// Get digital human render info (Android/iOS need the asset package download URL)
-export const getDigitalHumanRenderInfo = async (params) => {
-  const data = await post(
-    "GetDigitalHumanRenderInfo",
-    { DigitalHumanId: params.digitalHumanId }
-  );
-  return {
-    clientInferencePackageUrl: data.ClientInferencePackageUrl,
-    isSupportSmallImageMode: data.IsSupportSmallImageMode,
-  };
 };
 
 // 查询正在运行的数字人视频流任务

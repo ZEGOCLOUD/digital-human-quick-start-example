@@ -36,11 +36,8 @@ android {
 }
 
 dependencies {
-    // ZEGO 数字人SDK
-    implementation("im.zego:digitalmobile:1.4.0.88")
-
-    // ZEGO RTC SDK
-    implementation("im.zego:express-private:3.22.0.46726")
+    // ZEGO RTC SDK (公开版本)
+    implementation("im.zego:express-video:3.22.0")
 
     // 网络库
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

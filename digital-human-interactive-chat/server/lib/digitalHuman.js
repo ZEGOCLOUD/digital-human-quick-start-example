@@ -50,7 +50,6 @@ export const createStreamTask = async (params) => {
   const data = await post("CreateDigitalHumanStreamTask", {
     DigitalHumanConfig: { DigitalHumanId: params.digitalHumanId },
     RTCConfig: { RoomId: params.roomId, StreamId: params.streamId },
-    ExtraConfig: { OutputMode: params.outputMode ?? 2 }, // 默认 Mobile 模式
   });
   return data.TaskId;
 };
@@ -59,18 +58,6 @@ export const createStreamTask = async (params) => {
 // Stop digital human video stream task
 export const stopStreamTask = async (params) => {
   await post("StopDigitalHumanStreamTask", { TaskId: params.taskId });
-};
-
-// 获取数字人渲染信息（Android/iOS 需要使用素材包下载地址）
-// Get digital human render info (Android/iOS need the asset package download URL)
-export const getDigitalHumanRenderInfo = async (params) => {
-  const data = await post("GetDigitalHumanRenderInfo", {
-    DigitalHumanId: params.digitalHumanId,
-  });
-  return {
-    clientInferencePackageUrl: data.ClientInferencePackageUrl,
-    isSupportSmallImageMode: data.IsSupportSmallImageMode,
-  };
 };
 
 // 获取 WebSocket 驱动信息

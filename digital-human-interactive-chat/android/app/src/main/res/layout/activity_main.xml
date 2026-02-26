@@ -37,12 +37,17 @@
         android:gravity="center" />
 
     <!-- 数字人视频区域（最大化显示）/ Digital human video area (maximized) -->
-    <im.zego.digitalmobile.ZegoDigitalView
-        android:id="@+id/digitalHumanView"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#000000" />
+        android:background="#000000">
+
+        <TextureView
+            android:id="@+id/remoteVideoView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
 
     <!-- 按钮区域（紧凑）/ Button area (compact) -->
     <LinearLayout
@@ -54,7 +59,7 @@
         <Button
             android:id="@+id/btnStartCall"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
             android:textSize="12sp"
@@ -64,7 +69,7 @@
         <Button
             android:id="@+id/btnStopCall"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
             android:enabled="false"
             android:textSize="12sp"
@@ -82,7 +87,7 @@
         <Button
             android:id="@+id/btnSimulateTalkZh"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
             android:enabled="false"
@@ -93,7 +98,7 @@
         <Button
             android:id="@+id/btnSimulateTalkEn"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
             android:enabled="false"
             android:textSize="11sp"

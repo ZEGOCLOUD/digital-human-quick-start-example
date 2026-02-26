@@ -8,13 +8,10 @@
           <mxGeometry x="300" y="20" width="300" height="40" as="geometry" />
         </mxCell>
         <mxCell id="3" value="1. 播放端（终端机）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;align=center;" parent="1" vertex="1">
-          <mxGeometry x="350" y="90" width="200" height="200" as="geometry" />
+          <mxGeometry x="350" y="90" width="200" height="150" as="geometry" />
         </mxCell>
         <mxCell id="4" value="ZEGO Express SDK&lt;br&gt;拉流播放" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="1" vertex="1">
           <mxGeometry x="365" y="130" width="170" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="5" value="数字人 SDK&#xa;(Android/iOS)&#xa;本地渲染" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="1" vertex="1">
-          <mxGeometry x="365" y="200" width="170" height="70" as="geometry" />
         </mxCell>
         <mxCell id="6" value="2. 编排端" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;align=center;" parent="1" vertex="1">
           <mxGeometry x="170" y="420" width="200" height="200" as="geometry" />
@@ -44,8 +41,8 @@
           <mxGeometry x="-0.3" relative="1" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="450" y="320" />
-              <mxPoint x="270" y="320" />
+              <mxPoint x="450" y="280" />
+              <mxPoint x="270" y="280" />
             </Array>
           </mxGeometry>
         </mxCell>

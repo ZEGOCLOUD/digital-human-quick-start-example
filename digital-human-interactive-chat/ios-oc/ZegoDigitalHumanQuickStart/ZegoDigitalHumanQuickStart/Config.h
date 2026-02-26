@@ -31,10 +31,6 @@
 // Backend API address, please replace with actual address
 @property (class, nonatomic, readonly) NSString *API_BASE_URL;
 
-// 数字人 ID
-// Digital Human ID
-@property (class, nonatomic, readonly) NSString *DIGITAL_HUMAN_ID;
-
 @end
 
 #endif /* Config_h */

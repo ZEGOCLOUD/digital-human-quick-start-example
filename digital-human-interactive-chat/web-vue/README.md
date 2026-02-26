@@ -14,14 +14,12 @@
 
 | 变量 | 说明 |
 |------|------|
-| `VITE_APP_ID` | ZEGO 应用 ID |
+| `VITE_APP_ID` | ZEGO 应用 ID。从 ZEGO [控制台](https://console.zego.im/) 获取。 |
 | `VITE_API_BASE_URL` | 业务后台地址 |
-| `VITE_DIGITAL_HUMAN_ID` | 数字人 ID |
 
 ```bash
 VITE_APP_ID=1234567890
 VITE_API_BASE_URL=http://localhost:3000
-VITE_DIGITAL_HUMAN_ID=your_digital_human_id
 ```
 
 ### 3. 安装依赖并运行
@@ -58,7 +56,7 @@ web-vue/
 
 | 步骤 | 说明 |
 |------|------|
-| 创建任务 | 调用 `POST /api/digital-human/create-task`，获取 taskId、roomId、streamId |
+| 创建任务 | 调用 `POST /api/digital-human/create-task` 获取 taskId |
 | 获取 Token | 调用 `GET /api/token?userId=xxx`，获取 RTC 登录 Token |
 | 登录房间 | 使用 Express SDK 登录 RTC 房间 |
 | 拉流播放 | 拉取数字人音视频流并渲染到页面 |

@@ -47,6 +47,6 @@
 
 - **业务后台**：Node.js + Express，提供 API 接口和数字人驱动逻辑
 - **Web 客户端**：React / Vue 示例，使用 ZEGO Express SDK 拉流播放
-- **移动端客户端**：Android / iOS 示例，支持 Express SDK + 数字人 SDK 渲染
+- **移动端客户端**：Android / iOS 示例，使用 ZEGO Express SDK 拉流播放
 
 详细接入指南请查看各示例目录下的 README.md 文件。

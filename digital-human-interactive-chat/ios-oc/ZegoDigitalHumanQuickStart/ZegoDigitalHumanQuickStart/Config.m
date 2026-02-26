@@ -21,13 +21,8 @@
 + (NSString *)API_BASE_URL {
     // 业务后台地址，请替换为实际地址
     // Backend API address, please replace with actual address
+    // (数字人 ID 由服务端配置 / Digital Human ID is configured on server)
     return @"http://localhost:3000";
-}
-
-+ (NSString *)DIGITAL_HUMAN_ID {
-    // 数字人 ID，用于预加载数字人 SDK。与业务后台约定或者从业务后台获取即可。
-    // Digital Human ID, used to preload the digital human SDK. It can be obtained from the backend or agreed with the backend.
-    return @"c7a4e7a5-1648-4ed6-ac7c-53ad44b9d5f5";
 }
 
 @end

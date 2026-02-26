@@ -7,33 +7,33 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		461E43F3D491A60E0A872DB4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DB147071CF9A65E6C81190BB /* AppDelegate.m */; };
 		86BF8FB62EDE88D900BD8897 /* image_placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* image_placeholder.png */; };
-		f787bc3baad9fbdbdfcd8abd /* Config.m in Sources */ = {isa = PBXBuildFile; fileRef = ef67ac9bbd9180c5a0a2d8bf /* Config.m */; };
-		b24b8e03cbae6dccfe2ae38d /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = c4ff58e275b37c463ddec6aa /* ViewController.m */; };
 		92D9805A5E28C3005DDE9ED2 /* Pods_ZegoDigitalHumanQuickStart.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D880F908AA7C02965DFC93BD /* Pods_ZegoDigitalHumanQuickStart.framework */; };
 		9D76D71DA33A47B26186B0AE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6F180BD737560F1FF02E81B /* Foundation.framework */; };
 		CE72A13D3A40EAC907C2B872 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8483E621F401E1E92D44E102 /* main.m */; };
-		461E43F3D491A60E0A872DB4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DB147071CF9A65E6C81190BB /* AppDelegate.m */; };
 		F956A185E0B413CF2FA61984 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 30138656593AB7522AEBDCB2 /* SceneDelegate.m */; };
+		b24b8e03cbae6dccfe2ae38d /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = c4ff58e275b37c463ddec6aa /* ViewController.m */; };
+		f787bc3baad9fbdbdfcd8abd /* Config.m in Sources */ = {isa = PBXBuildFile; fileRef = ef67ac9bbd9180c5a0a2d8bf /* Config.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		a7f98bddf8062faaa3dbb1bf /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ZegoDigitalHumanQuickStart/Config.h; sourceTree = "<group>"; };
-		ef67ac9bbd9180c5a0a2d8bf /* Config.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Config.m; path = ZegoDigitalHumanQuickStart/Config.m; sourceTree = "<group>"; };
-		9b59ae9af9accae683ec3edb /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ViewController.h; path = ZegoDigitalHumanQuickStart/ViewController.h; sourceTree = "<group>"; };
-		c4ff58e275b37c463ddec6aa /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ZegoDigitalHumanQuickStart/ViewController.m; sourceTree = "<group>"; };
 		30138656593AB7522AEBDCB2 /* SceneDelegate.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SceneDelegate.m; path = ZegoDigitalHumanQuickStart/SceneDelegate.m; sourceTree = "<group>"; };
+		51B0A0BB5E168564623FF2AE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ZegoDigitalHumanQuickStart/Info.plist; sourceTree = "<group>"; };
 		618DFE9E0FD42AF0017B67C4 /* Pods-ZegoDigitalHumanQuickStart.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ZegoDigitalHumanQuickStart.debug.xcconfig"; path = "Target Support Files/Pods-ZegoDigitalHumanQuickStart/Pods-ZegoDigitalHumanQuickStart.debug.xcconfig"; sourceTree = "<group>"; };
 		780EDFD0F3E8273B2CC9BA0F /* AppDelegate.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ZegoDigitalHumanQuickStart/AppDelegate.h; sourceTree = "<group>"; };
 		8483E621F401E1E92D44E102 /* main.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ZegoDigitalHumanQuickStart/main.m; sourceTree = "<group>"; };
+		9b59ae9af9accae683ec3edb /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ViewController.h; path = ZegoDigitalHumanQuickStart/ViewController.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* image_placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = image_placeholder.png; path = ZegoDigitalHumanQuickStart/Resources/image_placeholder.png; sourceTree = "<group>"; };
 		A6F180BD737560F1FF02E81B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		C3C7363EAEBF05F32EC8A444 /* Pods-ZegoDigitalHumanQuickStart.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ZegoDigitalHumanQuickStart.release.xcconfig"; path = "Target Support Files/Pods-ZegoDigitalHumanQuickStart/Pods-ZegoDigitalHumanQuickStart.release.xcconfig"; sourceTree = "<group>"; };
 		D880F908AA7C02965DFC93BD /* Pods_ZegoDigitalHumanQuickStart.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ZegoDigitalHumanQuickStart.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB147071CF9A65E6C81190BB /* AppDelegate.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ZegoDigitalHumanQuickStart/AppDelegate.m; sourceTree = "<group>"; };
 		E290938A3B6DF41C38C6E913 /* ZegoDigitalHumanQuickStart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZegoDigitalHumanQuickStart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FEF5DCE59A611C5D68B01B56 /* SceneDelegate.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = SceneDelegate.h; path = ZegoDigitalHumanQuickStart/SceneDelegate.h; sourceTree = "<group>"; };
-		51B0A0BB5E168564623FF2AE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ZegoDigitalHumanQuickStart/Info.plist; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5C /* image_placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = image_placeholder.png; path = ZegoDigitalHumanQuickStart/Resources/image_placeholder.png; sourceTree = "<group>"; };
+		a7f98bddf8062faaa3dbb1bf /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = ZegoDigitalHumanQuickStart/Config.h; sourceTree = "<group>"; };
+		c4ff58e275b37c463ddec6aa /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ZegoDigitalHumanQuickStart/ViewController.m; sourceTree = "<group>"; };
+		ef67ac9bbd9180c5a0a2d8bf /* Config.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Config.m; path = ZegoDigitalHumanQuickStart/Config.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +74,14 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
+		B1C2D3E4F5A60718293A4B5D /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60718293A4B5C /* image_placeholder.png */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
 		C3C3EFC47FAB2C70DAC85F3A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -109,14 +117,6 @@
 				B1C2D3E4F5A60718293A4B5D /* Resources */,
 			);
 			name = ZegoDigitalHumanQuickStart;
-			sourceTree = "<group>";
-		};
-		B1C2D3E4F5A60718293A4B5D /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				A1B2C3D4E5F60718293A4B5C /* image_placeholder.png */,
-			);
-			name = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -194,14 +194,12 @@
 				"${PODS_ROOT}/Target Support Files/Pods-ZegoDigitalHumanQuickStart/Pods-ZegoDigitalHumanQuickStart-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/Masonry/Masonry.framework",
 				"${BUILT_PRODUCTS_DIR}/SDWebImage/SDWebImage.framework",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ZegoDigitalMobile/ZegoDigitalMobile.framework/ZegoDigitalMobile",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ZegoExpressPrivate/Default/ZegoExpressEngine.framework/ZegoExpressEngine",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ZegoExpressEngine/ZegoExpressEngine.framework/ZegoExpressEngine",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Masonry.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SDWebImage.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ZegoDigitalMobile.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ZegoExpressEngine.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;

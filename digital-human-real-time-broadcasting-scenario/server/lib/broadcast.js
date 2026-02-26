@@ -1,4 +1,4 @@
-import { createStreamTask, driveByText, stopStreamTask, getDigitalHumanRenderInfo } from "./digitalHuman.js";
+import { createStreamTask, driveByText, stopStreamTask } from "./digitalHuman.js";
 
 const globalState = globalThis;
 
@@ -42,7 +42,6 @@ export const startBroadcast = async (options) => {
   const timbreId = options?.timbreId;
   const roomId = options?.roomId;
   const streamId = options?.streamId;
-  const outputMode = options?.outputMode ?? 1;  // 1=Web模式, 2=Mobile模式
   const textPool = options?.textPool && options.textPool.length > 0
     ? options.textPool
     : [];
@@ -76,12 +75,7 @@ export const startBroadcast = async (options) => {
     digitalHumanId,
     roomId,
     streamId,
-    outputMode,
   });
-
-  // 获取数字人渲染信息（Android/iOS 端需要）
-  // Get digital human render info (required by Android/iOS)
-  const renderInfo = await getDigitalHumanRenderInfo({ digitalHumanId });
 
   // 单次驱动播报的异步函数
   // Async function to drive broadcast once
@@ -119,9 +113,6 @@ export const startBroadcast = async (options) => {
     taskId,
     roomId,
     streamId,
-    digitalHumanId,
-    clientInferencePackageUrl: renderInfo.clientInferencePackageUrl,
-    isSupportSmallImageMode: renderInfo.isSupportSmallImageMode,
     timer,
   };
 };
