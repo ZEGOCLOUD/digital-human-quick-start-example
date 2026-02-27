@@ -1,3 +1,5 @@
+[中文](README.md) | [English](README.en.md)
+
 # 数字人交互聊天 - iOS 客户端
 
 本示例演示 iOS 端作为客户端，与数字人进行实时交互对话。

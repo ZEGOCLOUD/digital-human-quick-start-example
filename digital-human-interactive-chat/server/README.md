@@ -1,3 +1,5 @@
+[中文](README.md) | [English](README.en.md)
+
 # 数字人交互聊天业务后台
 
 本示例演示数字人交互聊天的业务后台，用于创建数字人任务、通过 WebSocket 驱动数字人、生成 RTC Token。

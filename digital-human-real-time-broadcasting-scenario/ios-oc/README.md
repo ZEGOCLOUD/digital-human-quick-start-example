@@ -1,3 +1,5 @@
+[中文](README.md) | [English](README.en.md)
+
 # 数字人播报系统 - iOS 播放端
 
 本示例演示 iOS 端作为播放端，拉取并播放数字人音视频流。
