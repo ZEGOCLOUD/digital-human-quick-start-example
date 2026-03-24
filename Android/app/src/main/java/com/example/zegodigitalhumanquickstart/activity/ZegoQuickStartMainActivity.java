@@ -26,6 +26,7 @@ import com.example.zegodigitalhumanquickstart.model.ZegoQuickStartTask;
 import com.example.zegodigitalhumanquickstart.model.ZegoQuickStartTaskStatus;
 import com.example.zegodigitalhumanquickstart.network.ZegoQuickStartAPIService;
 import com.example.zegodigitalhumanquickstart.ZegoQuickStartConstants;
+import com.example.zegodigitalhumanquickstart.util.ZegoQuickStartRTCRoomMessageParser;
 import com.example.zegodigitalhumanquickstart.view.ZegoQuickStartDigitalHumanPlaceholderView;
 import com.example.zegodigitalhumanquickstart.view.ZegoQuickStartDriveControlView;
 import com.example.zegodigitalhumanquickstart.view.ZegoQuickStartTaskControlView;
@@ -524,6 +525,11 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
                 public void onPlayerSyncRecvSEI(String streamID, byte[] data) {
                     handlePlayerSyncRecvSEI(streamID, data);
                 }
+
+                @Override
+                public void onRecvExperimentalAPI(String content) {
+                    handleExperimentalApi(content);
+                }
             });
             
             Log.d(TAG, "[RTC] 自定义视频渲染已启用");
@@ -635,6 +641,32 @@ public class ZegoQuickStartMainActivity extends AppCompatActivity implements
                 Log.e(TAG, "[RTC] 处理SEI数据失败", e);
             }
         }
+    }
+
+    private void handleExperimentalApi(String content) {
+        ZegoQuickStartRTCRoomMessageParser.AgentSpeakStatusResult result =
+                ZegoQuickStartRTCRoomMessageParser.parseSpeakStatusFromExperimentalAPI(content);
+        if (result.speakStatus == -1) {
+            return;
+        }
+
+        String message = null;
+        if (result.speakStatus == 2) {
+            message = result.driveID == null || result.driveID.isEmpty()
+                    ? "数字人开始说话"
+                    : "数字人开始说话，DriveID: " + result.driveID;
+        } else if (result.speakStatus == 4) {
+            message = result.driveID == null || result.driveID.isEmpty()
+                    ? "数字人说话结束"
+                    : "数字人说话结束，DriveID: " + result.driveID;
+        }
+
+        if (message == null) {
+            return;
+        }
+
+        Log.d(TAG, "[RTC] 收到数字人说话状态: " + message);
+        updateStatus(message);
     }
     
     // ==================== 任务管理 ====================

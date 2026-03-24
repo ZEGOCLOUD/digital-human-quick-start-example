@@ -10,6 +10,67 @@
 #import "ZegoMainViewController+Setup.h"
 #import <ZegoDigitalMobile/ZegoDigitalMobile.h>
 
+static int ZegoParseSpeakStatusFromExperimentalAPI(NSString *content, NSString **driveID) {
+    if (driveID) {
+        *driveID = nil;
+    }
+
+    if (!content || content.length == 0) {
+        return -1;
+    }
+
+    NSError *error = nil;
+    NSDictionary *contentDict = [NSJSONSerialization JSONObjectWithData:[content dataUsingEncoding:NSUTF8StringEncoding]
+                                                                 options:0
+                                                                   error:&error];
+    if (error || !contentDict) {
+        NSLog(@"[RTC] 解析 experimental api 失败: %@", error.localizedDescription);
+        return -1;
+    }
+
+    NSString *method = contentDict[@"method"];
+    if (![method isEqualToString:@"liveroom.room.on_recive_room_channel_message"]) {
+        return -1;
+    }
+
+    NSDictionary *params = contentDict[@"params"];
+    if (![params isKindOfClass:[NSDictionary class]]) {
+        return -1;
+    }
+
+    NSString *msgContent = params[@"msg_content"];
+    if (msgContent.length == 0) {
+        return -1;
+    }
+
+    NSDictionary *msgDict = [NSJSONSerialization JSONObjectWithData:[msgContent dataUsingEncoding:NSUTF8StringEncoding]
+                                                            options:0
+                                                              error:&error];
+    if (error || !msgDict) {
+        NSLog(@"[RTC] 解析房间消息失败: %@", error.localizedDescription);
+        return -1;
+    }
+
+    if (![msgDict[@"Product"] isEqualToString:@"digitalhuman"]) {
+        return -1;
+    }
+
+    if ([msgDict[@"Cmd"] intValue] != 1001) {
+        return -1;
+    }
+
+    NSDictionary *data = msgDict[@"Data"];
+    if (![data isKindOfClass:[NSDictionary class]]) {
+        return -1;
+    }
+
+    if (driveID) {
+        *driveID = data[@"DriveId"];
+    }
+
+    return [data[@"Status"] intValue];
+}
+
 @implementation ZegoMainViewController (RTC)
 
 #pragma mark - RTC Engine Management
@@ -177,6 +238,35 @@
     }
 }
 
+- (void)onRecvExperimentalAPI:(NSString *)content {
+    NSString *driveID = nil;
+    int speakStatus = ZegoParseSpeakStatusFromExperimentalAPI(content, &driveID);
+    if (speakStatus == -1) {
+        return;
+    }
+
+    NSString *statusText = nil;
+    if (speakStatus == 2) {
+        statusText = driveID.length > 0
+            ? [NSString stringWithFormat:@"数字人开始说话，DriveID: %@", driveID]
+            : @"数字人开始说话";
+    } else if (speakStatus == 4) {
+        statusText = driveID.length > 0
+            ? [NSString stringWithFormat:@"数字人说话结束，DriveID: %@", driveID]
+            : @"数字人说话结束";
+    }
+
+    if (statusText.length == 0) {
+        return;
+    }
+
+    NSLog(@"[RTC] 收到数字人说话状态: %@", statusText);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.statusLabel.hidden = NO;
+    });
+    [self updateStatus:statusText];
+}
+
 #pragma mark - ZegoCustomVideoRenderHandler
 
 - (void)onRemoteVideoFrameRawData:(unsigned char **)data
@@ -210,4 +300,3 @@
 }
 
 @end
-

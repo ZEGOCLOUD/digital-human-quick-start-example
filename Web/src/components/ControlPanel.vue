@@ -2,6 +2,7 @@
 import { ref, reactive, computed, inject } from "vue";
 import { streamAPI, driveAPI } from "../utils/api";
 import { CONFIG } from "../config";
+import { roomMessageParser } from "../utils";
 
 // 不再需要isDev
 
@@ -31,8 +32,8 @@ const loading = reactive({
 
 // 是否登录房间
 const isRoomLogined = ref(false);
-// 是否注册了房间流更新回调
-const roomStreamUpdateRegistered = ref(false);
+// 已注册回调的引擎实例
+const registeredInstance = ref(null);
 
 // 计算属性
 const canCreateTask = computed(() => {
@@ -101,8 +102,9 @@ const handleCreateTask = async () => {
     // 4. 更新appConfig中的appId
     props.appConfig.appId = appId;
     
-    // 5. 注册流状态更新回调（只注册一次）
-    if (!roomStreamUpdateRegistered.value) {
+    // 5. 注册回调（如果引擎实例发生变化，则重新注册）
+    if (registeredInstance.value !== zgInstance) {
+      // 5.1 注册流状态更新回调
       zgInstance.on('roomStreamUpdate', async (roomID, updateType, streamList, extendedData) => {
         console.log('[WebRTC] roomStreamUpdate', { roomID, updateType, streamList, extendedData });
         if (updateType === 'ADD' && streamList.length > 0) {
@@ -129,10 +131,44 @@ const handleCreateTask = async () => {
           }
         }
       });
-      roomStreamUpdateRegistered.value = true;
+      
+      // 5.2 注册实验性 API 回调，用于接收房间内发送的智能体状态消息
+      zgInstance.on('recvExperimentalAPI', (content) => {
+        console.log('[WebRTC] 收到实验性 API 消息:', content);
+        try {
+          const result = roomMessageParser.parseSpeakStatusFromExperimentalAPI(content);
+          if (!result) return;
+
+          let message = '';
+          if (result.speakStatus === 2) {
+            message = result.driveID ? `数字人开始说话，DriveID: ${result.driveID}` : '数字人开始说话';
+          } else if (result.speakStatus === 4) {
+            message = result.driveID ? `数字人说话结束，DriveID: ${result.driveID}` : '数字人说话结束';
+          }
+
+          if (message) {
+            console.log('[WebRTC] 显示消息 Toast:', message);
+            props.showMessage('warning', message);
+          }
+        } catch (e) {
+          console.error('[WebRTC] 处理实验性 API 消息失败:', e);
+        }
+      });
+
+      registeredInstance.value = zgInstance;
+
+      try {
+        await zgInstance.callExperimentalAPI({
+          method: 'onRecvRoomChannelMessage',
+          params: {},
+        });
+        console.log('[WebRTC] 已开启 onRecvRoomChannelMessage experimental API');
+      } catch (error) {
+        console.error('[WebRTC] 开启 onRecvRoomChannelMessage experimental API 失败:', error);
+      }
     }
     
-    // 6. 使用服务端返回的 token 登录房间
+    // 7. 使用服务端返回的 token 登录房间
     await zgInstance.loginRoom(roomId, token, { userID, userName });
     console.log("[webrtc] 登录房间成功", roomId, { userID, userName });
     isRoomLogined.value = true;

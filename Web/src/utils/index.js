@@ -167,3 +167,67 @@ export const driveStatusMap = {
   4: { text: "驱动结束", color: "#52c41a", loading: false },
   5: { text: "驱动打断", color: "#faad14", loading: false },
 };
+
+/**
+ * 房间消息解析器，用于解析来自 ZegoExpressEngine 的消息
+ */
+export const roomMessageParser = {
+  /**
+   * 从 experimentalAPI 的 content 中解析出数字人说话状态
+   * @param {string|object} content - Zego 引擎返回的内容
+   * @returns {object|null} - 返回 { speakStatus, driveID }，解析失败返回 null
+   */
+  parseSpeakStatusFromExperimentalAPI(content) {
+    if (!content) return null;
+    
+    let contentData;
+    try {
+      if (typeof content === 'string') {
+        contentData = JSON.parse(content);
+      } else {
+        contentData = content;
+      }
+    } catch (e) {
+      console.error('[roomMessageParser] content JSON 解析失败:', e);
+      return null;
+    }
+
+    // 检查是否是房间消息
+    const method = contentData.method;
+    if (method !== 'onRecvRoomChannelMessage' && method !== 'liveroom.room.on_recive_room_channel_message') {
+      return null;
+    }
+
+    const params = contentData.params || contentData.content;
+    if (!params) return null;
+
+    const msgContent = params.msg_content || params.msgContent || null;
+    if (!msgContent) return null;
+
+    let msgData;
+    if (!msgContent) return null;
+
+    try {
+      msgData = typeof msgContent === 'string' ? JSON.parse(msgContent) : msgContent;
+    } catch (e) {
+      console.error('[roomMessageParser] msgContent 解析失败:', e);
+      return null;
+    }
+
+    if (msgData.Product !== 'digitalhuman') {
+      return null;
+    }
+
+    if (msgData.Cmd !== 1001) {
+      return null;
+    }
+
+    const body = msgData.Data;
+    if (!body) return null;
+
+    return {
+      speakStatus: body.Status, // 2: 开始说话, 4: 结束说话
+      driveID: body.DriveId
+    };
+  }
+};
