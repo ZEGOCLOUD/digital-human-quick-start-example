@@ -23,6 +23,26 @@ import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
+    data class ExperimentalApiMessage(
+        val method: String? = null,
+        val params: ExperimentalApiParams? = null
+    )
+
+    data class ExperimentalApiParams(
+        val msg_content: String? = null
+    )
+
+    data class DigitalHumanDriveMessage(
+        val Product: String? = null,
+        val Cmd: Int = 0,
+        val Data: DigitalHumanDriveData? = null
+    )
+
+    data class DigitalHumanDriveData(
+        val Status: Int = 0,
+        val DriveId: String? = null
+    )
+
     // UI组件
     // UI components
     private lateinit var tvStatus: TextView
@@ -98,6 +118,10 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+            }
+
+            override fun onRecvExperimentalAPI(content: String) {
+                handleExperimentalApi(content)
             }
         })
     }
@@ -191,6 +215,42 @@ class MainActivity : AppCompatActivity() {
             val canvas = ZegoCanvas(remoteVideoView)
             engine.startPlayingStream(streamID, canvas)
             updateStatus("Playing...")
+        }
+    }
+
+    private fun handleExperimentalApi(content: String) {
+        try {
+            val experimentalApiMessage = gson.fromJson(content, ExperimentalApiMessage::class.java)
+            if (experimentalApiMessage?.method != "liveroom.room.on_recive_room_channel_message") {
+                return
+            }
+
+            val msgContent = experimentalApiMessage.params?.msg_content ?: return
+            val driveMessage = gson.fromJson(msgContent, DigitalHumanDriveMessage::class.java)
+            if (driveMessage?.Product != "digitalhuman" || driveMessage.Cmd != 1001) {
+                return
+            }
+
+            val driveData = driveMessage.Data ?: return
+            when (driveData.Status) {
+                2 -> {
+                    updateStatus(
+                        driveData.DriveId?.let {
+                            "Digital human started speaking, DriveID: $it"
+                        } ?: "Digital human started speaking"
+                    )
+                }
+
+                4 -> {
+                    updateStatus(
+                        driveData.DriveId?.let {
+                            "Digital human finished speaking, DriveID: $it"
+                        } ?: "Digital human finished speaking"
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("DigitalHumanDemo", "Handle experimental API failed", e)
         }
     }
 

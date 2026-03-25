@@ -17,6 +17,35 @@ const clientConfig = {
 // Generate random user ID. Please generate user ID according to business requirements in actual use.
 const generateUserId = () => `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
+function parseSpeakStatusFromExperimentalAPI(content) {
+  if (!content) return null
+
+  const contentData = typeof content === 'string' ? JSON.parse(content) : content
+  const method = contentData?.method
+  if (
+    method !== 'onRecvRoomChannelMessage' &&
+    method !== 'liveroom.room.on_recive_room_channel_message'
+  ) {
+    return null
+  }
+
+  const params = contentData?.params || contentData?.content
+  const msgContent = params?.msg_content || params?.msgContent
+  if (!msgContent) {
+    return null
+  }
+
+  const msgData = typeof msgContent === 'string' ? JSON.parse(msgContent) : msgContent
+  if (msgData?.Product !== 'digitalhuman' || msgData?.Cmd !== 1001 || !msgData?.Data) {
+    return null
+  }
+
+  return {
+    speakStatus: msgData.Data.Status,
+    driveID: msgData.Data.DriveId,
+  }
+}
+
 function App() {
   const [status, setStatus] = useState('Initializing...')
   const [roomInfo, setRoomInfo] = useState(null)
@@ -90,6 +119,30 @@ function App() {
         // Step 3: Dynamically import and initialize ZegoExpressEngine
         const { ZegoExpressEngine } = await import('zego-express-engine-webrtc')
         engine = new ZegoExpressEngine(clientConfig.appId, "")
+
+        engine.on('recvExperimentalAPI', (content) => {
+          try {
+            const result = parseSpeakStatusFromExperimentalAPI(content)
+            if (!result) return
+
+            if (result.speakStatus === 2) {
+              setStatus(result.driveID
+                ? `Digital human started speaking, DriveID: ${result.driveID}`
+                : 'Digital human started speaking')
+            } else if (result.speakStatus === 4) {
+              setStatus(result.driveID
+                ? `Digital human finished speaking, DriveID: ${result.driveID}`
+                : 'Digital human finished speaking')
+            }
+          } catch (error) {
+            console.error('Handle experimental API failed:', error)
+          }
+        })
+
+        await engine.callExperimentalAPI({
+          method: 'onRecvRoomChannelMessage',
+          params: {},
+        })
 
         // 步骤4：登录实时音视频 (RTC) 房间
         // Step 4: Login to Real-Time Communication (RTC) room
