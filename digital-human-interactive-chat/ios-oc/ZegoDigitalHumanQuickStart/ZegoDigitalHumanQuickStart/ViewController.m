@@ -16,6 +16,64 @@ static NSString *const kUserIdPrefix = @"user_demo_ios";
 static NSString *const kRoomIdPrefix = @"room_demo_ios";
 static NSString *const kStreamIdPrefix = @"stream_demo_ios";
 
+static int ZegoParseSpeakStatusFromExperimentalAPI(NSString *content, NSString **driveID) {
+    if (driveID) {
+        *driveID = nil;
+    }
+
+    if (content.length == 0) {
+        return -1;
+    }
+
+    NSError *error = nil;
+    NSDictionary *contentDict = [NSJSONSerialization JSONObjectWithData:[content dataUsingEncoding:NSUTF8StringEncoding]
+                                                                 options:0
+                                                                   error:&error];
+    if (error || ![contentDict isKindOfClass:[NSDictionary class]]) {
+        return -1;
+    }
+
+    if (![contentDict[@"method"] isEqualToString:@"liveroom.room.on_recive_room_channel_message"]) {
+        return -1;
+    }
+
+    NSDictionary *params = contentDict[@"params"];
+    if (![params isKindOfClass:[NSDictionary class]]) {
+        return -1;
+    }
+
+    NSString *msgContent = params[@"msg_content"];
+    if (msgContent.length == 0) {
+        return -1;
+    }
+
+    NSDictionary *msgDict = [NSJSONSerialization JSONObjectWithData:[msgContent dataUsingEncoding:NSUTF8StringEncoding]
+                                                            options:0
+                                                              error:&error];
+    if (error || ![msgDict isKindOfClass:[NSDictionary class]]) {
+        return -1;
+    }
+
+    if (![msgDict[@"Product"] isEqualToString:@"digitalhuman"]) {
+        return -1;
+    }
+
+    if ([msgDict[@"Cmd"] intValue] != 1001) {
+        return -1;
+    }
+
+    NSDictionary *data = msgDict[@"Data"];
+    if (![data isKindOfClass:[NSDictionary class]]) {
+        return -1;
+    }
+
+    if (driveID) {
+        *driveID = data[@"DriveId"];
+    }
+
+    return [data[@"Status"] intValue];
+}
+
 // ========== 1. 内部接口扩展 ==========
 // ========== 1. Internal interface extensions ==========
 @interface ViewController () <ZegoEventHandler>
@@ -652,6 +710,24 @@ static NSString *const kStreamIdPrefix = @"stream_demo_ios";
                 break;
             }
         }
+    }
+}
+
+- (void)onRecvExperimentalAPI:(NSString *)content {
+    NSString *driveID = nil;
+    int speakStatus = ZegoParseSpeakStatusFromExperimentalAPI(content, &driveID);
+    if (speakStatus == -1) {
+        return;
+    }
+
+    if (speakStatus == 2) {
+        [self updateStatus:driveID.length > 0
+         ? [NSString stringWithFormat:@"Digital human started speaking, DriveID: %@", driveID]
+         : @"Digital human started speaking"];
+    } else if (speakStatus == 4) {
+        [self updateStatus:driveID.length > 0
+         ? [NSString stringWithFormat:@"Digital human finished speaking, DriveID: %@", driveID]
+         : @"Digital human finished speaking"];
     }
 }
 

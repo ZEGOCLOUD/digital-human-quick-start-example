@@ -2,6 +2,35 @@ import { useState, useRef, useEffect } from 'react';
 import { ZegoExpressEngine } from 'zego-express-engine-webrtc';
 import './App.css';
 
+function parseSpeakStatusFromExperimentalAPI(content) {
+  if (!content) return null;
+
+  const contentData = typeof content === 'string' ? JSON.parse(content) : content;
+  const method = contentData?.method;
+  if (
+    method !== 'onRecvRoomChannelMessage' &&
+    method !== 'liveroom.room.on_recive_room_channel_message'
+  ) {
+    return null;
+  }
+
+  const params = contentData?.params || contentData?.content;
+  const msgContent = params?.msg_content || params?.msgContent;
+  if (!msgContent) {
+    return null;
+  }
+
+  const msgData = typeof msgContent === 'string' ? JSON.parse(msgContent) : msgContent;
+  if (msgData?.Product !== 'digitalhuman' || msgData?.Cmd !== 1001 || !msgData?.Data) {
+    return null;
+  }
+
+  return {
+    speakStatus: msgData.Data.Status,
+    driveID: msgData.Data.DriveId,
+  };
+}
+
 function App() {
   const [engine, setEngine] = useState(null);
   const [status, setStatus] = useState('waiting for initialization...');
@@ -34,6 +63,30 @@ function App() {
       const server = 'wss://webliveroom-api.zego.im/ws';
       const zg = new ZegoExpressEngine(appId, server);
       setEngine(zg);
+
+      zg.on('recvExperimentalAPI', (content) => {
+        try {
+          const result = parseSpeakStatusFromExperimentalAPI(content);
+          if (!result) return;
+
+          if (result.speakStatus === 2) {
+            setStatus(result.driveID
+              ? `Digital human started speaking, DriveID: ${result.driveID}`
+              : 'Digital human started speaking');
+          } else if (result.speakStatus === 4) {
+            setStatus(result.driveID
+              ? `Digital human finished speaking, DriveID: ${result.driveID}`
+              : 'Digital human finished speaking');
+          }
+        } catch (error) {
+          console.error('Handle experimental API failed:', error);
+        }
+      });
+
+      await zg.callExperimentalAPI({
+        method: 'onRecvRoomChannelMessage',
+        params: {},
+      });
 
       // 2. 生成唯一标识 / Generate unique identifiers
       const userId = `user_${Date.now()}`;

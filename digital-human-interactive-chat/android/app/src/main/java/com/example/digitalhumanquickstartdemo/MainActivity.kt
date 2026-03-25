@@ -36,6 +36,26 @@ class MainActivity : AppCompatActivity() {
         private const val STREAM_ID_PREFIX = "stream_demo_android"
     }
 
+    data class ExperimentalApiMessage(
+        val method: String? = null,
+        val params: ExperimentalApiParams? = null
+    )
+
+    data class ExperimentalApiParams(
+        val msg_content: String? = null
+    )
+
+    data class DigitalHumanDriveMessage(
+        val Product: String? = null,
+        val Cmd: Int = 0,
+        val Data: DigitalHumanDriveData? = null
+    )
+
+    data class DigitalHumanDriveData(
+        val Status: Int = 0,
+        val DriveId: String? = null
+    )
+
     // UI 组件 / UI components
     private lateinit var tvStatus: TextView
     private lateinit var remoteVideoView: android.view.TextureView
@@ -123,6 +143,10 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+            }
+
+            override fun onRecvExperimentalAPI(content: String) {
+                handleExperimentalApi(content)
             }
         })
 
@@ -315,6 +339,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleExperimentalApi(content: String) {
+        try {
+            val contentMessage = gson.fromJson(content, ExperimentalApiMessage::class.java)
+            if (contentMessage?.method != "liveroom.room.on_recive_room_channel_message") {
+                return
+            }
+
+            val msgContent = contentMessage.params?.msg_content
+            if (msgContent.isNullOrEmpty()) {
+                return
+            }
+
+            val driveMessage = gson.fromJson(msgContent, DigitalHumanDriveMessage::class.java)
+            if (driveMessage?.Product != "digitalhuman" || driveMessage.Cmd != 1001 || driveMessage.Data == null) {
+                return
+            }
+
+            val message = when (driveMessage.Data.Status) {
+                2 -> if (driveMessage.Data.DriveId.isNullOrEmpty()) {
+                    "Digital human started speaking"
+                } else {
+                    "Digital human started speaking, DriveID: ${driveMessage.Data.DriveId}"
+                }
+                4 -> if (driveMessage.Data.DriveId.isNullOrEmpty()) {
+                    "Digital human finished speaking"
+                } else {
+                    "Digital human finished speaking, DriveID: ${driveMessage.Data.DriveId}"
+                }
+                else -> null
+            }
+
+            if (!message.isNullOrEmpty()) {
+                updateStatus(message)
+            }
+        } catch (e: Exception) {
+            Log.e("DH", "Handle experimental api failed", e)
+        }
+    }
+
     /**
      * 模拟说话
      * Simulate talk
@@ -445,4 +508,3 @@ class MainActivity : AppCompatActivity() {
         ZegoExpressEngine.destroyEngine(null)
     }
 }
-
