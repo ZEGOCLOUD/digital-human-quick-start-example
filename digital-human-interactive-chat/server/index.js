@@ -1,5 +1,6 @@
 import http from "http";
 import url from "url";
+import { fileURLToPath } from "url";
 import {
   createStreamTask,
   stopStreamTask,
@@ -12,7 +13,7 @@ import { callTTSAndDriveDigitalHumanByWebSocket } from "./lib/websocket.js";
 import { readFileSync, existsSync } from "fs";
 
 const loadEnv = () => {
-  const envPath = new URL(".env", import.meta.url).pathname;
+  const envPath = fileURLToPath(new URL(".env", import.meta.url));
   if (!existsSync(envPath)) return;
   const content = readFileSync(envPath, "utf-8");
   for (const line of content.split("\n")) {
